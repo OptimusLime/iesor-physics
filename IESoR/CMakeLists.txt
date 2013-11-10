@@ -1,0 +1,89 @@
+set(IESOR_World_SRCS
+	Simulation/iesorWorld.cpp
+)
+set(IESOR_World_HDRS
+	Simulation/iesorWorld.h
+)
+
+set(IESOR_Init_SRCS
+	Simulation/Initialize/initializeWorld.cpp
+)
+set(IESOR_Init_HDRS
+	Simulation/Initialize/initializeWorld.h
+)
+
+set(IESOR_Record_SRCS
+	Simulation/Record/recordWorld.cpp
+)
+set(IESOR_Record_HDRS
+	Simulation/Record/recordWorld.h
+)
+
+set(IESOR_Construction_SRCS
+	Construction/Bodies/outputsToBodies.cpp
+	Construction/GPU/gpuBodyBuilder.cpp
+)
+set(IESOR_Construction_HDRS
+	Construction/Bodies/outputsToBodies.h
+	Construction/GPU/gpuBodyBuilder.h
+)
+
+set(IESOR_General_HDRS
+	iesor.h
+)
+include_directories( ../ )
+
+if(IESOR_BUILD_SHARED)
+	add_library(IESoR_shared SHARED
+		${IESOR_General_HDRS}
+		${IESOR_World_HDRS}
+		${IESOR_World_SRCS}
+		${IESOR_Record_HDRS}
+		${IESOR_Record_SRCS}
+		${IESOR_Init_HDRS}
+		${IESOR_Init_SRCS}
+		${IESOR_Construction_HDRS}
+		${IESOR_Construction_SRCS}
+		)
+	set_target_properties(IESoR_shared PROPERTIES
+		OUTPUT_NAME "IESoR"
+		CLEAN_DIRECT_OUTPUT 1
+		VERSION ${IESOR_VERSION}
+	)
+endif()
+
+if(IESOR_BUILD_STATIC)
+	add_library(IESoR STATIC
+		${IESOR_General_HDRS}
+		${IESOR_World_HDRS}
+		${IESOR_World_SRCS}
+		${IESOR_Record_HDRS}
+		${IESOR_Record_SRCS}
+		${IESOR_Init_HDRS}
+		${IESOR_Init_SRCS}
+		${IESOR_Construction_HDRS}
+		${IESOR_Construction_SRCS}
+	)
+	set_target_properties(IESoR PROPERTIES
+		CLEAN_DIRECT_OUTPUT 1
+		VERSION ${IESOR_VERSION}
+	)
+endif()
+
+# These are used to create visual studio folders.
+source_group(Simulation FILES ${IESOR_World_SRCS} ${IESOR_World_HDRS})
+source_group(Simulation\\Initialize FILES ${IESOR_Init_SRCS} ${IESOR_Init_HDRS})
+source_group(Simulation\\Record FILES ${IESOR_Record_SRCS} ${IESOR_Record_HDRS})
+source_group(Construction FILES ${IESOR_Construction_SRCS} ${IESOR_Construction_HDRS})
+source_group(Include FILES ${IESOR_General_HDRS})
+
+#Think about adding in iesor installation for linux systems
+
+
+
+
+
+
+
+
+
