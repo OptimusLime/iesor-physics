@@ -1,10 +1,16 @@
+#ifndef IESORWORLD_H
+#define IESORWORLD_H
+
+
 #include <stdio.h>
 
-class Generic 
+class IESoRWorld 
 {
 	public:
-		Generic();
+		IESoRWorld();
+		void hamWash();
 	private:
-		~Generic();
+		~IESoRWorld();
 };
 
+#endif //IESORWORLD_H

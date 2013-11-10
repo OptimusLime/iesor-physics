@@ -31,7 +31,12 @@ set(IESOR_Construction_HDRS
 set(IESOR_General_HDRS
 	iesor.h
 )
-include_directories( ../ )
+
+#need to include json source files as well
+include_directories( ../ ${JSON_SOURCE_DIR})
+
+#need to link the JSON library in
+target_link_libraries (JSON)
 
 if(IESOR_BUILD_SHARED)
 	add_library(IESoR_shared SHARED

@@ -1,11 +1,11 @@
 #include "recordWorld.h"
 
-Generic::Generic()
+RecordWorld::RecordWorld()
 {
 	
 }
 
-Generic::~Generic()
+RecordWorld::~RecordWorld()
 {
 	
 }

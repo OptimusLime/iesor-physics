@@ -1,11 +1,11 @@
 #include "outputsToBodies.h"
 
-Generic::Generic()
+ShaderToComponents::ShaderToComponents()
 {
 	
 }
 
-Generic::~Generic()
+ShaderToComponents::~ShaderToComponents()
 {
 	
 }

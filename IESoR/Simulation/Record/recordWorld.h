@@ -1,10 +1,15 @@
+#ifndef RECORDWORLD_H
+#define RECORDWORLD_H
+
 #include <stdio.h>
 
-class Generic 
+class RecordWorld 
 {
 	public:
-		Generic();
+		RecordWorld();
 	private:
-		~Generic();
+		~RecordWorld();
+
 };
 
+#endif //RECORDWORLD_H

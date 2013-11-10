@@ -1,10 +1,14 @@
+#ifndef WORLDBUILDER_H
+#define WORLDBUILDER_H
+
 #include <stdio.h>
 
-class Generic 
+class WorldBuilder 
 {
 	public:
-		Generic();
+		WorldBuilder();
 	private:
-		~Generic();
+		~WorldBuilder();
 };
 
+#endif //WORLDBUILDER_H

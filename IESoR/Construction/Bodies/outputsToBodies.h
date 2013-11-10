@@ -1,10 +1,14 @@
+#ifndef SHADERTOCOMPONENTS_H
+#define SHADERTOCOMPONENTS_H
+
 #include <stdio.h>
 
-class Generic 
+class ShaderToComponents 
 {
 	public:
-		Generic();
+		ShaderToComponents();
 	private:
-		~Generic();
+		~ShaderToComponents();
 };
 
+#endif //SHADERTOCOMPONENTS

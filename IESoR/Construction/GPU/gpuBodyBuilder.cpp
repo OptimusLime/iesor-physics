@@ -1,11 +1,11 @@
 #include "gpuBodyBuilder.h"
 
-Generic::Generic()
+ShaderToBody::ShaderToBody()
 {
 	
 }
 
-Generic::~Generic()
+ShaderToBody::~ShaderToBody()
 {
 	
 }

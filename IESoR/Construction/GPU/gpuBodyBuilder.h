@@ -1,10 +1,17 @@
-#include <stdio.h>
+#ifndef SHADERTOBODY_H
+#define SHADERTOBODY_H
 
-class Generic 
+#include <stdio.h>
+#include <IESoR\Construction\Bodies\outputsToBodies.h>
+
+class ShaderToBody 
 {
 	public:
-		Generic();
+		ShaderToBody();
+
+
 	private:
-		~Generic();
+		~ShaderToBody();
 };
 
+#endif //SHADERTOBODY_H

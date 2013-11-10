@@ -18,7 +18,7 @@
 
 #include <IESoR/IESoR.h>
 #include <Box2D/Box2D.h>
-
+#include <iostream>
 #include <stdio.h>
 
 // This is a simple example of building and running a simulation
@@ -28,6 +28,9 @@
 // with your rendering engine in your game engine.
 int main(int argc, char** argv)
 {
+	IESoRWorld* w = new IESoRWorld();
+	w->hamWash();
+
 	B2_NOT_USED(argc);
 	B2_NOT_USED(argv);
 
@@ -39,7 +42,7 @@ int main(int argc, char** argv)
 
 	// Define the ground body.
 	b2BodyDef groundBodyDef;
-	groundBodyDef.position.Set(0.0f, -10.0f);
+	groundBodyDef.position.Set(.1f, -15.0f);
 
 	// Call the body factory which allocates memory for the ground body
 	// from a pool and creates the ground box shape (also from a pool).
@@ -85,6 +88,12 @@ int main(int argc, char** argv)
 	int32 velocityIterations = 6;
 	int32 positionIterations = 2;
 
+	body->ApplyAngularImpulse(1, true);
+
+	b2Vec2 pushIt(1.8f, 0.0f);
+	b2Vec2 center(0,0);
+	body->ApplyLinearImpulse(pushIt, center, true);
+
 	// This is our little game loop.
 	for (int32 i = 0; i < 60; ++i)
 	{
@@ -99,6 +108,8 @@ int main(int argc, char** argv)
 		printf("%4.2f %4.2f %4.2f\n", position.x, position.y, angle);
 	}
 
+	int r;
+	std::cin >> r;
 	// When the world destructor is called, all bodies and joints are freed. This can
 	// create orphaned pointers, so be careful about your world management.
 

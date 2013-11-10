@@ -1,11 +1,11 @@
 #include "initializeWorld.h"
 
-Generic::Generic()
+WorldBuilder::WorldBuilder()
 {
 	
 }
 
-Generic::~Generic()
+WorldBuilder::~WorldBuilder()
 {
 	
 }

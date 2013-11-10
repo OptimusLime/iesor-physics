@@ -1,11 +1,15 @@
 #include "iesorWorld.h"
 
-Generic::Generic()
+IESoRWorld::IESoRWorld()
 {
 	
 }
 
-Generic::~Generic()
+void IESoRWorld::hamWash()
+{
+	//do nuffin!
+}
+IESoRWorld::~IESoRWorld()
 {
 	
 }
