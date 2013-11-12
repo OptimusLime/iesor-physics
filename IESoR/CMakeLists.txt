@@ -35,8 +35,7 @@ set(IESOR_General_HDRS
 #need to include json source files as well
 include_directories( ../ ${JSON_SOURCE_DIR})
 
-#need to link the JSON library in
-target_link_libraries (JSON)
+
 
 if(IESOR_BUILD_SHARED)
 	add_library(IESoR_shared SHARED
@@ -50,11 +49,18 @@ if(IESOR_BUILD_SHARED)
 		${IESOR_Construction_HDRS}
 		${IESOR_Construction_SRCS}
 		)
+		
+		
+	#need to link the JSON library in
+	target_link_libraries (IESoR_shared)
+	
 	set_target_properties(IESoR_shared PROPERTIES
 		OUTPUT_NAME "IESoR"
 		CLEAN_DIRECT_OUTPUT 1
 		VERSION ${IESOR_VERSION}
 	)
+	
+	
 endif()
 
 if(IESOR_BUILD_STATIC)
@@ -69,10 +75,16 @@ if(IESOR_BUILD_STATIC)
 		${IESOR_Construction_HDRS}
 		${IESOR_Construction_SRCS}
 	)
+	
+	#need to link the JSON library in
+	target_link_libraries (IESoR)
+	
 	set_target_properties(IESoR PROPERTIES
 		CLEAN_DIRECT_OUTPUT 1
 		VERSION ${IESOR_VERSION}
 	)
+	
+	
 endif()
 
 # These are used to create visual studio folders.

@@ -16,10 +16,26 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
+
 #include <IESoR/IESoR.h>
 #include <Box2D/Box2D.h>
+
 #include <iostream>
+#include <fstream>
+
+#include <stdlib.h>
 #include <stdio.h>
+
+using namespace std;
+
+void PrintFullPath( char * partialPath )
+{
+	char full[_MAX_PATH];
+	if( _fullpath( full, partialPath, _MAX_PATH ) != NULL )
+		printf( "Full path is: %s\n", full );
+	else
+		printf( "Invalid path\n" );
+}
 
 // This is a simple example of building and running a simulation
 // using Box2D. Here we create a large ground box and a small dynamic
@@ -28,6 +44,19 @@
 // with your rendering engine in your game engine.
 int main(int argc, char** argv)
 {
+
+
+	// Get current directory
+	PrintFullPath( ".\\" );
+
+	/*long begin,end;
+	ifstream myfile ("basic.json");
+	begin = myfile.tellg();
+	myfile.seekg (0, ios::end);
+	end = myfile.tellg();
+	myfile.close();
+	cout << "size is: " << (end-begin) << " bytes.\n";*/
+
 	IESoRWorld* w = new IESoRWorld();
 	w->hamWash();
 

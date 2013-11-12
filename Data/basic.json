@@ -1,0 +1,8 @@
+{
+    "shapes": 
+	{
+		"rect1" : {"type":"Rect", "topLeft" : {"x" : "600", "y" : "200"}, "widthHeight": {"width":"100", "height" : "50"}, "color" : "#836948"},
+		"circle1" : {"type":"Rect", "center" : {"x" : "200", "y" : "400"}, "radius": "65", "color" : "#369"},
+		"triangle1" : {"type":"Triangle", "topLeft" : {"x" : "100", "y" : "25"}, "widthHeight": {"width":"100", "height" : "50"}, "color" : "#953"}
+	}
+}
