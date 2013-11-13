@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Oh Hello</title>
+</head>
+<body>
+
+    <canvas id="fab" width="1000" height="700" style="border: 1px solid black;"></canvas>
+    <script>
+
+        var object = { intValue: 1 };
+        var callNative = jsBridgeObject.slotThatReturns(object);
+
+        var canvas;
+
+        function genericFabricAdd() {
+
+
+            if (!canvas) {
+                canvas = new fabric.Canvas('fab', {
+                    hoverCursor: 'pointer',
+                    selection: false,
+                    perPixelTargetFind: true,
+                    targetFindTolerance: 5
+                });
+                canvas.renderOnAddRemove = false;
+            }
+
+            canvas.add(
+              new fabric.Rect({ top: 50, left: 0, width: 50, height: 50, fill: '#f55' }),
+              new fabric.Circle({ top: 100, left: 100, radius: 75, fill: 'green' }),
+              new fabric.Triangle({ top: 0, left: 0, width: 100, height: 100, fill: 'blue' })
+            );
+
+            canvas.renderAll();
+
+        }
+
+
+
+        var physicsToCanvas = {};
+
+        function updateObject(fab, props) {
+
+            fab.set(props);
+        //update our object with this stuff plz
+//            for (var p in props) {
+//                if(fab[p] != undefined)
+//                    fab[p] = props[p];
+//            }        
+        }
+
+        function injectFabricObjects(fullJSON) {
+
+            if (!canvas) {
+                canvas = new fabric.Canvas('fab', {
+                    hoverCursor: 'pointer',
+                    selection: false,
+                    perPixelTargetFind: true,
+                    targetFindTolerance: 5
+                });
+                canvas.renderOnAddRemove = false;
+            }
+
+            if(!fullJSON)
+                return;
+
+            insertObjects = fullJSON.shapes;
+
+            console.log('injecting!');
+            console.log(insertObjects);
+
+
+
+            for(var id in insertObjects) {
+                var canvasObj = insertObjects[id];
+                console.log(canvasObj);
+
+                var fabObj = physicsToCanvas[id];
+                
+                var props;
+
+                switch (canvasObj.type) {
+                    case "Rect":
+
+                        var topLeft = canvasObj.topLeft;
+                        var widthHeight = canvasObj.widthHeight;
+                        var color = canvasObj.color || '#f55';
+
+                        props = { top:  parseFloat(topLeft.y), left:  parseFloat(topLeft.x), width: parseFloat(widthHeight.width), height:  parseFloat(widthHeight.height), fill: color };
+
+                        //only create object 
+                        if (!fabObj)
+                            fabObj = new fabric.Rect(props);
+
+                        break;
+                    case "Polygon":
+                        var points = canvasObj.points;
+                        var color = canvasObj.color || "#43B";
+
+                        props = {color: color};
+
+                        //only create object
+                        if (!fabObj)
+                            fabObj = new fabric.Polygon(points, props);
+                        else
+                        //update points with new points
+                            fabObj.points = points;
+
+                        break;
+                    case "Circle":
+
+                        var center = canvasObj.center;
+                        var radius = canvasObj.radius;
+                        var color = canvasObj.color || 'green';
+
+                        props = { top: parseFloat(center.y), left: parseFloat(center.x), radius: parseFloat(radius), fill: color };
+
+                        if (!fabObj)
+                            fabObj = new fabric.Circle(props);
+
+                        break;
+                    case "Triangle":
+
+                        var topLeft = canvasObj.topLeft;
+                        var widthHeight = canvasObj.widthHeight;
+                        var color = canvasObj.color || 'blue';
+
+                        props = { top: parseFloat(topLeft.y), left: parseFloat(topLeft.x), width: parseFloat(widthHeight.width), height: parseFloat(widthHeight.height), fill: color };
+
+                        if (!fabObj)
+                            fabObj = new fabric.Triangle(props);
+
+
+                        break;
+
+
+                }
+
+                //if we don't have a stored object, we make one!
+                if (!physicsToCanvas[id]) {
+                    physicsToCanvas[id] = fabObj;
+                    canvas.add(fabObj);
+                }
+                //otherwise, we update our existing object with our props plz
+                else
+                    updateObject(fabObj, props);
+            }
+
+            console.log("Canvas written to!");
+            console.log(physicsToCanvas);
+
+            //now after all the changes, we render!
+            canvas.renderAll();
+
+        }
+
+
+
+
+        function wakkawakka(jsObj) {
+            console.log("Wakka wakka: " + jsObj);
+            console.log('Is up to date');
+            console.log(JSON.parse(jsObj));
+            return "bakka do da!";
+        }                
+
+    </script>
+</body>
+</html>

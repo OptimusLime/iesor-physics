@@ -1,9 +1,28 @@
-#include <QtCore/QCoreApplication>
-#include <QtCore/QDebug>
- 
+#include "QtFabric\view\qtfabric.h"
+#include <QtWebKit\qwebview.h>
+#include <QtGui/QApplication>
+#include <IESoR\Simulation\iesorWorld.h>
+
+
 int main(int argc, char *argv[])
 {
-  QCoreApplication a(argc, argv);
-  qDebug() << "Hello CMake";
-  return a.exec();
+	QApplication app(argc, argv);
+    QUrl url;
+    if (argc > 1)
+        url = QUrl(argv[1]);
+    else
+        url = QUrl("http://www.google.com/ncr");
+    
+	QtFabric *browser = new QtFabric();
+    #if defined Q_OS_SYMBIAN || defined Q_WS_HILDON || defined Q_WS_MAEMO_5 || defined Q_WS_SIMULATOR
+        browser->showMaximized();
+    #else
+        browser->show();
+    #endif
+
+		IESoRWorld* w = new IESoRWorld();
+
+		browser->drawToFabric(w->worldDrawList());
+
+    return app.exec();
 }

@@ -1,3 +1,5 @@
+#set(BOX2D_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+
 set(BOX2D_Collision_SRCS
 	Collision/b2BroadPhase.cpp
 	Collision/b2CollideCircle.cpp

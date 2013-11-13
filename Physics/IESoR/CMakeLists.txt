@@ -1,3 +1,5 @@
+#set(IESOR_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+
 set(IESOR_World_SRCS
 	Simulation/iesorWorld.cpp
 )

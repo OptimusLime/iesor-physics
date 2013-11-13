@@ -3,14 +3,32 @@
 
 #include <JSON\json.h>
 #include <stdio.h>
+#include <Box2D\Box2D.h>
+
+struct PhysicsID;
 
 class IESoRWorld 
 {
 	public:
 		IESoRWorld();
-		void hamWash();
+		std::string worldDrawList();
+		b2World* world;
+		int updateWorld(double msUpdate);
+
+		b2Body* addBodyToWorld(std::string bodyID, b2BodyDef* bodyDef);
+		b2Fixture* addShapeToBody(b2Body* body, b2FixtureDef* fixDef);
+
 	private:
+		//Json::Value* bodyList;
+		//Json::Value* shapeList;
+
+		std::vector<PhysicsID*> bodyList;
+		std::vector<PhysicsID*> shapeList;
+
+		
 		~IESoRWorld();
+		
 };
 
-#endif //IESORWORLD_H
+#endif 
+//IESORWORLD_H

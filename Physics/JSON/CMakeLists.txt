@@ -1,3 +1,5 @@
+#set(JSON_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+
 set(JSON_HDRS
 	src/autolink.h
 	src/json_batchallocator.h

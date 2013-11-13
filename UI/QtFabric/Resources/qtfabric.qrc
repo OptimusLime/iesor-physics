@@ -1,0 +1,6 @@
+<RCC> 
+    <qresource prefix="/QtFabric">
+        <file>html/js/fabric.min.js</file>
+        <file>html/basic.html</file>
+    </qresource>
+</RCC>
