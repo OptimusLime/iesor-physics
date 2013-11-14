@@ -17,15 +17,23 @@ class IESoRWorld
 
 		b2Body* addBodyToWorld(std::string bodyID, b2BodyDef* bodyDef);
 		b2Fixture* addShapeToBody(b2Body* body, b2FixtureDef* fixDef);
+		b2Fixture* addShapeToBody(b2Body*body, b2Shape* shape, float density);
 
 	private:
 		//Json::Value* bodyList;
 		//Json::Value* shapeList;
+		double interpolation;
+		double radians;
+		double accumulator;
+		double desiredFPS;
+		double simulationRate;
 
 		std::vector<PhysicsID*> bodyList;
 		std::vector<PhysicsID*> shapeList;
 
+		PhysicsID* createShapeID();
 		
+
 		~IESoRWorld();
 		
 };

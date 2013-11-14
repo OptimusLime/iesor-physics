@@ -20,7 +20,11 @@ JSBridge::slotThatReturns(const QMap<QString, QVariant>& object)
     qDebug() << "JSBridge::slotThatReturns" << this->m_returnObject;
     return this->m_returnObject;
 }
- 
+void JSBridge::jsCallPhysicsUpdate()
+{
+	emit triggerUpdate();
+}
+
 void 
 JSBridge::slotThatEmitsSignal()
 {

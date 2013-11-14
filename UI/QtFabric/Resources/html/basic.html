@@ -8,41 +8,94 @@
     <canvas id="fab" width="1000" height="700" style="border: 1px solid black;"></canvas>
     <script>
 
-        var object = { intValue: 1 };
-        var callNative = jsBridgeObject.slotThatReturns(object);
+//        var object = { intValue: 1 };
+//        var callNative = jsBridgeObject.slotThatReturns(object);
+
+
+
 
         var canvas;
 
-        function genericFabricAdd() {
+        var width = 800;
+        var height = 600;
 
 
-            if (!canvas) {
-                canvas = new fabric.Canvas('fab', {
-                    hoverCursor: 'pointer',
-                    selection: false,
-                    perPixelTargetFind: true,
-                    targetFindTolerance: 5
-                });
-                canvas.renderOnAddRemove = false;
-            }
+        var physicsToCanvas = {};
+        var visibleWindow = {w: 50, h: 37.5};
+        var screenOffset = {x:0, y:0};
+        var screenDimensions = {width: width, height: height};
+        var halfDimensions = {w: width/2, h: height/2};
+        var redrawCanvas;
 
-            canvas.add(
-              new fabric.Rect({ top: 50, left: 0, width: 50, height: 50, fill: '#f55' }),
-              new fabric.Circle({ top: 100, left: 100, radius: 75, fill: 'green' }),
-              new fabric.Triangle({ top: 0, left: 0, width: 100, height: 100, fill: 'blue' })
-            );
+        var scale = 1;
 
-            canvas.renderAll();
 
+
+        document.getElementById("fab").setAttribute("width", width);
+        document.getElementById("fab").setAttribute("height", height);
+
+
+        var lastPosition;
+
+
+
+
+        function addCanvasMouseHandling() {
+
+            var flag = 0;
+            var element = window;//document.getElementById('fab');
+            element.addEventListener("mousedown", function(e){
+                flag = 1;
+
+                var event = e || window.event;
+
+                lastPosition = {
+                    x : event.clientX,
+                    y : event.clientY
+                };
+
+            });
+            element.addEventListener("mousemove", function(e){
+
+                var event = e || window.event;
+
+
+                if(flag)
+                {
+//                    console.log('Moving with flag down!');
+                    //get the change from last position to this position
+                    var deltaX = event.clientX- lastPosition.x,
+                            deltaY = event.clientY - lastPosition.y;
+
+                    //delta shift all objects
+                    redrawCanvas(deltaX, deltaY);
+
+                }
+
+                //set the new last position to the current for next time
+                lastPosition = {
+                    x : event.clientX,
+                    y : event.clientY
+                };
+
+            });
+
+            element.addEventListener("mouseup", function(){
+                lastPosition = undefined;
+                flag = 0;
+            });
         }
 
 
 
-        var physicsToCanvas = {};
 
         function updateObject(fab, props) {
 
+            //clear out top/left info
+            clearOriginalTL(fab);
             fab.set(props);
+            if(props.angle)
+                fab.setAngle(props.angle);
         //update our object with this stuff plz
 //            for (var p in props) {
 //                if(fab[p] != undefined)
@@ -50,7 +103,133 @@
 //            }        
         }
 
+
+
+        document.documentElement.onmousewheel = function (e)
+        {
+           var event = e || window.event;
+           var ratio = height/width;
+
+            var wAdd = event.wheelDelta < 0 ? 5 : -5;
+            var hAdd = wAdd*ratio;
+
+            visibleWindow.w += wAdd;
+            visibleWindow.h += hAdd;
+
+            redrawCanvas();
+        };
+
+
+        var clearOriginalTL = function(fabObj)
+        {
+//            fabObj.original_scaleX = 1;
+//            fabObj.original_scaleY = 1;
+            fabObj.original_left = undefined;
+            fabObj.original_top = undefined;
+        };
+        /**
+         * Zoom the canvas
+         * https://groups.google.com/forum/#!topic/fabricjs/hC5smxDeGXA
+         */
+        var setCanvasZoom = function(zoomX, zoomY) {
+            var objects = canvas.getObjects();
+
+            for(var key in objects)
+            {
+
+                var object = objects[key];
+                var scaleX = object.scaleX,
+                        scaleY = object.scaleY,
+                        left = object.left,
+                        top = object.top;
+
+                // preserve the original dimensions.
+                object.original_scaleX = (object.original_scaleX == undefined) ? scaleX : object.original_scaleX;
+                object.original_scaleY = (object.original_scaleY == undefined) ? scaleY : object.original_scaleY;
+                object.original_left = (object.original_left == undefined) ? left : object.original_left;
+                object.original_top = (object.original_top == undefined) ? top : object.original_top;
+
+                object.scaleX = object.original_scaleX * zoomX;
+                object.scaleY = object.original_scaleY * zoomY;
+                object.left = (object.original_left - halfDimensions.w) * zoomX + halfDimensions.w;
+                object.top = (object.original_top - halfDimensions.h)* zoomY + halfDimensions.h;
+
+                object.setCoords();
+            }
+
+//            canvas
+//                    .setWidth(scope.fabricCanvas.width * zoomX)
+//                    .setHeight(scope.fabricCanvas.height * zoomY);
+        };
+
+        function screenScale(value)
+        {
+            return scale*value;
+        }
+
+        var screenTransformPointList = function(stringPoints)
+        {
+            var finalPoints = [].slice.call(stringPoints);
+            for(var s=0; s < finalPoints.length; s++)
+            {
+                finalPoints[s].x = finalPoints[s].x +  halfDimensions.w - screenOffset.x;
+                finalPoints[s].y = -finalPoints[s].y +  halfDimensions.h + screenOffset.y;
+            }
+            return finalPoints;
+        };
+
+        function screenTransform(sp)
+        {
+            var pt = {x: parseFloat(sp.x), y: parseFloat(sp.y)};
+            return {x: (pt.x + halfDimensions.w - screenOffset.x), y: (-pt.y + halfDimensions.h + screenOffset.y)};
+
+        }
+
+
+        redrawCanvas = function(deltaX, deltaY)
+        {
+            if(!canvas)
+                return;
+
+            var scaleX = width/visibleWindow.w;
+            var scaleY = height/visibleWindow.h;
+
+            //we need to move the objects and do scaling
+            if(deltaX || deltaY)
+            {
+                var objects = canvas.getObjects();
+
+                for(var key in objects)
+                {
+                    var object = objects[key];
+
+                    // preserve the original dimensions.
+                    if(object.original_left != undefined)
+                        object.original_left += deltaX/scaleX;
+                    if(object.original_top != undefined)
+                        object.original_top += deltaY/scaleY;
+                }
+
+
+                //the offsets have changed as well!
+                screenOffset.x -= deltaX/scaleX;
+                screenOffset.y += deltaY/scaleY;
+            }
+
+
+            //scale relative to the sizes!
+            setCanvasZoom(scaleX, scaleY);
+
+            //now after all the changes, we render!
+            canvas.renderAll();
+        };
         function injectFabricObjects(fullJSON) {
+
+            var str = JSON.stringify(fullJSON);
+
+            console.log(str);
+            var replaceJSON = JSON.parse(str);
+            console.log(replaceJSON);
 
             if (!canvas) {
                 canvas = new fabric.Canvas('fab', {
@@ -60,34 +239,49 @@
                     targetFindTolerance: 5
                 });
                 canvas.renderOnAddRemove = false;
+                addCanvasMouseHandling();
             }
 
-            if(!fullJSON)
+            if(!replaceJSON)
                 return;
 
-            insertObjects = fullJSON.shapes;
+            insertObjects = replaceJSON.shapes;
 
             console.log('injecting!');
             console.log(insertObjects);
 
+//            var scaleX = (width/visibleWindow.w), scaleY = (height/visibleWindow.h);
 
+
+            var radToDeg = 180.0/Math.PI;
 
             for(var id in insertObjects) {
                 var canvasObj = insertObjects[id];
+
+                console.log('Insert: ');
                 console.log(canvasObj);
+
 
                 var fabObj = physicsToCanvas[id];
                 
                 var props;
 
+                var polyPoints, topLeft, widthHeight, color;
+                var radius, center;
+
                 switch (canvasObj.type) {
                     case "Rect":
 
-                        var topLeft = canvasObj.topLeft;
-                        var widthHeight = canvasObj.widthHeight;
-                        var color = canvasObj.color || '#f55';
+                        var bodyOffset = canvasObj.bodyOffset;
 
-                        props = { top:  parseFloat(topLeft.y), left:  parseFloat(topLeft.x), width: parseFloat(widthHeight.width), height:  parseFloat(widthHeight.height), fill: color };
+                        topLeft =  screenTransform(canvasObj.topLeft);
+                        widthHeight = canvasObj.widthHeight;
+                        color = canvasObj.color || '#f55';
+
+                        props = { top: parseFloat(topLeft.y) - bodyOffset.y, left: parseFloat(topLeft.x)+ bodyOffset.x,
+                            width: parseFloat(widthHeight.width), height:  parseFloat(widthHeight.height), fill: color,
+                            angle: radToDeg*canvasObj.rotation };
+
 
                         //only create object 
                         if (!fabObj)
@@ -95,38 +289,64 @@
 
                         break;
                     case "Polygon":
-                        var points = canvasObj.points;
-                        var color = canvasObj.color || "#43B";
 
-                        props = {color: color};
+
+                        var bodyOffset = canvasObj.bodyOffset;
+//                        var jsonString = JSON.stringify(canvasObj.points);
+//                        console.log("Json attempt");
+//                        console.log(JSON.parse(jsonString));
+
+                        for(var p=0; p < canvasObj.points.length; p++)
+                        {
+                            canvasObj.points[p].y *= -1.0;
+                        }
+
+                        color = canvasObj.color || "#43B";
+
+//                        console.log('pcolor');
+//                        console.log(color);
+
+                        props = {
+                            top: screenOffset.y + halfDimensions.h - bodyOffset.y,
+                            left: halfDimensions.w - screenOffset.x + bodyOffset.x,
+                            fill: color, angle: radToDeg*canvasObj.rotation };
 
                         //only create object
                         if (!fabObj)
-                            fabObj = new fabric.Polygon(points, props);
+                            fabObj = new fabric.Polygon(canvasObj.points, props);
                         else
-                        //update points with new points
-                            fabObj.points = points;
+//                        update points with new points
+                            fabObj.points = canvasObj.points;
+
+                            //use the centered object to offset the top/left
+//                        props.top += fabObj.height/2;
+//                        props.left += fabObj.width/2;
+
+                        console.log(canvasObj.points);
+
 
                         break;
                     case "Circle":
+                        var bodyOffset = canvasObj.bodyOffset;
+                        center = screenTransform(canvasObj.center);
+                        radius = screenScale(canvasObj.radius);
+                        color = canvasObj.color || 'green';
 
-                        var center = canvasObj.center;
-                        var radius = canvasObj.radius;
-                        var color = canvasObj.color || 'green';
-
-                        props = { top: parseFloat(center.y), left: parseFloat(center.x), radius: parseFloat(radius), fill: color };
+                        props = { top: parseFloat(center.y) - bodyOffset.y, left: parseFloat(center.x) + bodyOffset.x, radius: parseFloat(radius), fill: color };
 
                         if (!fabObj)
                             fabObj = new fabric.Circle(props);
 
                         break;
                     case "Triangle":
+                        var bodyOffset = canvasObj.bodyOffset;
+                        topLeft = screenTransform(canvasObj.topLeft);
+                        widthHeight = canvasObj.widthHeight;
+                        color = canvasObj.color || 'blue';
 
-                        var topLeft = canvasObj.topLeft;
-                        var widthHeight = canvasObj.widthHeight;
-                        var color = canvasObj.color || 'blue';
-
-                        props = { top: parseFloat(topLeft.y), left: parseFloat(topLeft.x), width: parseFloat(widthHeight.width), height: parseFloat(widthHeight.height), fill: color };
+                        props = { top: parseFloat(topLeft.y) - bodyOffset.y, left: parseFloat(topLeft.x)+ bodyOffset.x,
+                            width: parseFloat(widthHeight.width), height: parseFloat(widthHeight.height),
+                            fill: color, angle: radToDeg*canvasObj.rotation  };
 
                         if (!fabObj)
                             fabObj = new fabric.Triangle(props);
@@ -137,23 +357,42 @@
 
                 }
 
+//                if(!fabObj)
+//                    continue;
+
                 //if we don't have a stored object, we make one!
                 if (!physicsToCanvas[id]) {
                     physicsToCanvas[id] = fabObj;
                     canvas.add(fabObj);
                 }
                 //otherwise, we update our existing object with our props plz
-                else
+                else{
                     updateObject(fabObj, props);
+                }
+
             }
 
-            console.log("Canvas written to!");
-            console.log(physicsToCanvas);
-
-            //now after all the changes, we render!
-            canvas.renderAll();
+//            console.log("Canvas written to!");
+//            console.log(physicsToCanvas);
+            redrawCanvas();
+//            //scale relative to the sizes!
+//            setCanvasZoom(width/visibleWindow.w, height/visibleWindow.h);
+//
+//            //now after all the changes, we render!
+//            canvas.renderAll();
 
         }
+
+
+        //let's see if we can do 30 fps!
+        var animate = function()
+        {
+            jsBridgeObject.jsCallPhysicsUpdate();
+
+            setTimeout(animate, 33);
+        };
+
+        setTimeout(animate, 0);
 
 
 

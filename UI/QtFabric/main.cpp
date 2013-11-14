@@ -20,9 +20,7 @@ int main(int argc, char *argv[])
         browser->show();
     #endif
 
-		IESoRWorld* w = new IESoRWorld();
-
-		browser->drawToFabric(w->worldDrawList());
+		
 
     return app.exec();
 }

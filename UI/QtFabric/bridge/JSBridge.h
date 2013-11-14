@@ -14,10 +14,16 @@ public:
  
 signals:
     void signal(QMap<QString, QVariant> object);
+	
+	void triggerUpdate();
+
 public slots:
     QMap<QString, QVariant> slotThatReturns(const QMap<QString, 
                                             QVariant>& object);
     void slotThatEmitsSignal();
+
+	void jsCallPhysicsUpdate();
+
  
 private:
     int m_signalEmited;

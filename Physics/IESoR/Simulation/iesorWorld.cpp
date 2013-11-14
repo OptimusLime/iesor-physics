@@ -181,9 +181,8 @@ b2Body* IESoRWorld::addBodyToWorld(string bodyID, b2BodyDef* bodyDef)
 
 	return body;
 }
-		
 
-b2Fixture* IESoRWorld::addShapeToBody(b2Body* body, b2FixtureDef* fixDef)
+PhysicsID* IESoRWorld::createShapeID()
 {
 	//We just keep a static int of all the shapes for all identification
 	int bcnt = staticBodyCount++;
@@ -193,18 +192,53 @@ b2Fixture* IESoRWorld::addShapeToBody(b2Body* body, b2FixtureDef* fixDef)
 
 	//Save our shape to the list of shapes
 	this->shapeList.push_back(shapeID);
-	
-	//Attach this info to the shape for identification
-	fixDef->userData = shapeID;
+
+	return shapeID;
+}
+
+void setShapeID(b2Fixture* fix, PhysicsID* shapeID)
+{
+	fix->SetUserData(shapeID);
+}
+
+b2Fixture* IESoRWorld::addShapeToBody(b2Body*body, b2Shape* shape, float density)
+{
+	//create physics id based on global shape count
+	PhysicsID* pid = createShapeID();
 
 	//add the fixture to our body, 
-	return body->CreateFixture(fixDef);
-	
+	b2Fixture* fix = body->CreateFixture(shape, density);
+
+	//Attach this info to the shape for identification
+	setShapeID(fix, pid);
+
+	//send back created fixture
+	return fix;
+}
+
+b2Fixture* IESoRWorld::addShapeToBody(b2Body* body, b2FixtureDef* fixDef)
+{
+	//create physics id based on global shape count
+	PhysicsID* pid = createShapeID();
+
+	//add the fixture to our body using the definition
+	b2Fixture* fix = body->CreateFixture(fixDef);
+
+	//Attach this info to the shape for identification
+	setShapeID(fix, pid);
+
+	//send back created fixture
+	return fix;
 }
 
 
 IESoRWorld::IESoRWorld()
 {
+	this->interpolation =0;
+	accumulator = 0;
+	desiredFPS = 30;
+	simulationRate = 1.0 / desiredFPS;
+	radians = 0;
 	
 	//this->bodyList = new vector<PhysicsID*>();
 	//this->shapeList = new vector<PhysicsID*>();
@@ -216,15 +250,20 @@ IESoRWorld::IESoRWorld()
 
 	// Construct a world object, which will hold and simulate the rigid bodies.
 	this->world = new b2World(gravity);
+	this->world->SetAutoClearForces(false);
 
 	// Define the ground body.
 	b2BodyDef groundBodyDef;
-	groundBodyDef.position.Set(0.0f, -10.0f);
+	groundBodyDef.type = b2_staticBody;
+	groundBodyDef.position.Set(0.0f, -18.0f);
 
 	// Call the body factory which allocates memory for the ground body
 	// from a pool and creates the ground box shape (also from a pool).
 	// The body is also added to the world.
-	b2Body* groundBody = this->world->CreateBody(&groundBodyDef);
+	b2Body* groundBody = this->addBodyToWorld("ground", &groundBodyDef);//this->world->CreateBody(&groundBodyDef);
+
+	//b2Body* groundBody = this->world->CreateBody(&groundBodyDef);
+
 
 	// Define the ground box shape.
 	b2PolygonShape groundBox;
@@ -233,41 +272,25 @@ IESoRWorld::IESoRWorld()
 	groundBox.SetAsBox(50.0f, 10.0f);
 
 	// Add the ground fixture to the ground body.
-	groundBody->CreateFixture(&groundBox, 0.0f);
-
+	this->addShapeToBody(groundBody, &groundBox, 0.0f);
+	//groundBody->CreateFixture(&groundBox, 0.0f);
+	
 	// Define the dynamic body. We set its position and call the body factory.
 	b2BodyDef bodyDef;
 	bodyDef.type = b2_dynamicBody;
-	bodyDef.position.Set(0.0f, 4.0f);
+	bodyDef.position.Set(0.0f, 24.0f);
 
-	std::string bodyID = "rect1";
-
+	//add body to world using definition
 	b2Body* body = this->addBodyToWorld("rect1", &bodyDef);
 
-	//int blSize = this->bodyList.size();
-	//Json::Value va = *this->bodyList;
-	//vector<PhysicsID*> va = *this->bodyList;
-
-	//va.push_back(bodyID);
-
-	//va[blSize] = bodyID;
-
-	//this->bodyMap[std::to_string((long double)world->GetBodyCount())] = bodyID;
-	//body->SetUserData(&va[blSize]);//bodyID);//va[blSize]);
 	// Define another box shape for our dynamic body.
 	b2PolygonShape dynamicBox;
-	dynamicBox.SetAsBox(1.0f, 1.0f);
+	dynamicBox.SetAsBox(5.0f, 5.0f);
 
 	// Define the dynamic body fixture.
 	b2FixtureDef fixtureDef;
 	fixtureDef.shape = &dynamicBox;
-
-	//listCount = std::to_string((long double)this->shapeList->size());
-	//va = *this->shapeList;
-	//va.push_back(std::to_string((long double)bcnt));
-
-	//blSize = this->shapeList->size();
-	//va[blSize] = std::to_string((long double)bcnt);
+	fixtureDef.restitution = .5;
 
 	// Set the box density to be non-zero, so it will be dynamic.
 	fixtureDef.density = 1.0f;
@@ -275,10 +298,17 @@ IESoRWorld::IESoRWorld()
 	// Override the default friction.
 	fixtureDef.friction = 0.3f;
 
+	// Add the shape to the body.
 	this->addShapeToBody(body, &fixtureDef);
 
-	// Add the shape to the body.
-	//body->CreateFixture(&fixtureDef);
+	//Add some forces!
+	//body->ApplyAngularImpulse(.4, true);
+	
+	body->ApplyTorque(150, true);
+	b2Vec2 pulse(70, 0);
+	b2Vec2 o(0,3);
+	body->ApplyLinearImpulse(pulse, o, true);
+
 }
 
 
@@ -308,6 +338,7 @@ string IESoRWorld::worldDrawList()
 	//fastwriter is not human readable --> compact
 	//exactly what we want to sent to our html files
 	Json::FastWriter* writer = new Json::FastWriter();
+
 	//root is what we'll be sending back with all the shapes (stored in shapes!)
 	Json::Value root;
 	Json::Value shapes;
@@ -318,32 +349,30 @@ string IESoRWorld::worldDrawList()
 	{
 		if(B->GetUserData())
 		{
+			//fetch our body identifier
 			PhysicsID* pid = static_cast<PhysicsID*>(B->GetUserData());//*((string*)B->GetUserData());
-			//std::string bodyID = *static_cast<std::string*>(B->GetUserData());//*((string*)B->GetUserData());
 			std::string bodyID = pid->ID();
-			//int blSize = *static_cast<int*>(B->GetUserData());
-			//IESoRWorld* theWorld = static_cast<IESoRWorld*>(B->GetUserData());
-			//Json::Value bodyJSON = *static_cast<Json::Value*>(B->GetUserData());
-			//std::string bodyID = *static_cast<std::string*>(B->GetUserData());//*((string*)B->GetUserData());
-			//string bodyID = "";//writer->write(bodyJSON);
-			//get all our shapes
+			
+			//we must get all our shapes
 			b2Fixture* F = B->GetFixtureList();
 
 			//cycle through the shapes
 			while(F != NULL)
 			{
+				//Hold our shape drawing information
 				Json::Value singleShape;
 
 				switch (F->GetType())
 				{
 				case b2Shape::e_circle:
 					{
-						b2CircleShape* circle = (b2CircleShape*) F->GetShape();                     
+						b2CircleShape* circle = (b2CircleShape*) F->GetShape();
 						/* Do stuff with a circle shape */
-
 						Json::Value center = positionToJSONValue(circle->m_p);
 						Json::Value radius = circle->m_radius;
 						singleShape["type"] = "Circle";
+						singleShape["bodyOffset"] = positionToJSONValue(B->GetPosition());
+						singleShape["rotation"] = B->GetAngle();
 						singleShape["center"] = center;
 						singleShape["radius"] = circle->m_radius;
 						singleShape["color"] = "#369";
@@ -357,7 +386,9 @@ string IESoRWorld::worldDrawList()
 						Json::Value points = listOfPoints(poly->m_vertices, poly->m_count);
 						singleShape["type"] = "Polygon";
 						singleShape["points"] = points;
-						singleShape["color"] = "#963";
+						singleShape["bodyOffset"] = positionToJSONValue(B->GetPosition());
+						singleShape["rotation"] = B->GetAngle();
+						singleShape["color"] = "#38F";
 
 					}
 					break;
@@ -381,12 +412,66 @@ string IESoRWorld::worldDrawList()
 
 	root["shapes"] = shapes;
 
-	//string rString = writer->write(root);
-
 	return writer->write(root);
-	/*
-	string fullJSON = get_file_contents("../../../Physics/Data/basic.json");
-	return fullJSON;*/
+}
+
+
+int IESoRWorld::updateWorld(double msUpdate)
+{
+    int stepCount = 0;
+
+    //# of seconds since last time
+    double frameTime = msUpdate/1000.0f;
+
+    //maximum frame time, to prevent what is called the spiral of death
+    if (frameTime > .35)
+        frameTime = .35;
+
+
+    //we don't need last time anymore, set it to the current time
+    //this.lastTime = currentTime;
+
+    //we accumulate all the time we haven't rendered things in
+    this->accumulator += frameTime;
+
+    //        console.log('Frame time: ' + frameTime + ' accumulator: ' + accumulator);
+
+    //        console.log('Pre acc');
+    while (accumulator >= simulationRate)
+    {
+        stepCount++;
+        //push the muscles outward a bit
+        float speedup = 3;
+
+        /*for (int i = 0; i < this->muscles.size(); i++)
+        {
+            Muscle* muscle = this.muscles[i];
+            int oLength = muscle.Joint.GetLength();
+            int lengthCalc = (1 + muscle.GetAmplitude() * (float)cos(radians + muscle.GetPhase() * 2 * Math.PI)) * muscle.GetOriginalLength();
+            muscle.Joint.SetLength(lengthCalc);
+        }*/
+
+        //step the physics world
+        this->world->Step(
+            this->simulationRate   //frame-rate
+            , 10       //velocity iterations
+            , 10       //position iterations
+        );
+
+
+		this->world->ClearForces();
+
+        //increment the radians for the muscles
+        radians += speedup * this->simulationRate;
+
+        //decrement the accumulator - we ran a chunk just now!
+        accumulator -= this->simulationRate;
+
+    }
+            
+    this->interpolation = accumulator / this->simulationRate;
+
+    return stepCount;//{stepCount: stepCount, deltaChange: (Date.now() - currentTime), log:logEvents}; 
 }
 
 IESoRWorld::~IESoRWorld()

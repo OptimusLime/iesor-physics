@@ -4,6 +4,7 @@
 #include <QtGui/QMainWindow>
 #include <QtWebKit\QWebView>
 #include <stdio.h>
+#include <IESoR\iesor.h>
 
 class JSBridge;
 
@@ -20,6 +21,7 @@ public:
 protected slots:
 	void finishLoading(bool);
 	void addJavaScriptObject();
+	void physicsUpdate();
 
 private:
 	JSBridge* bridgeObject;
@@ -27,6 +29,7 @@ private:
 	QString fabric;
 	QVector<std::string> jsonQueue;
 	bool loadedView;
+	IESoRWorld* world;
 
 	void processDrawQueue();
 };

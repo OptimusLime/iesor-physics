@@ -59,12 +59,31 @@ QtFabric::QtFabric()
 		this, 
 		SLOT(addJavaScriptObject()));
 
+	connect(bridgeObject, SIGNAL(triggerUpdate()), this, SLOT(physicsUpdate()));
+
+
+
+
 	QString r =  readFile(":/QtFabric/html/basic.html");
 	view->setHtml(r);
 	qDebug() << "contents: " << r;
 
+
+	world = new IESoRWorld();
+	this->drawToFabric(world->worldDrawList());
+
+
 	//view->show();
 }
+
+void QtFabric::physicsUpdate()
+{
+	//qDebug() << "Triggering physics update!";
+
+	world->updateWorld(33.333);
+	this->drawToFabric(world->worldDrawList());
+}
+
 void 
 	QtFabric::addJavaScriptObject()
 {
