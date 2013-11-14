@@ -2,9 +2,9 @@
 #define QTFABRIC_H
 
 #include <QtGui/QMainWindow>
-#include <QtWebKit\QWebView>
+#include <QtWebKit/QWebView>
 #include <stdio.h>
-#include <IESoR\iesor.h>
+#include <IESoR/iesor.h>
 
 class JSBridge;
 

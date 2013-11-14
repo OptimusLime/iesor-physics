@@ -1,9 +1,9 @@
 #ifndef IESORWORLD_H
 #define IESORWORLD_H
 
-#include <JSON\json.h>
+#include <JSON/json.h>
 #include <stdio.h>
-#include <Box2D\Box2D.h>
+#include <Box2D/Box2D.h>
 
 struct PhysicsID;
 

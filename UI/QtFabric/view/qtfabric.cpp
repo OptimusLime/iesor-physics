@@ -1,8 +1,8 @@
 #include <QtGui>
 #include "qtfabric.h"
-#include "QtFabric\bridge\JSBridge.h"
-#include <QtWebKit\QWebView>
-#include <QtWebKit\QWebFrame>
+#include "QtFabric/bridge/JSBridge.h"
+#include <QtWebKit/QWebView>
+#include <QtWebKit/QWebFrame>
 
 QString readFile(QString filename) {
 	QFile file(filename);

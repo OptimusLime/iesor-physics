@@ -3,9 +3,9 @@
 #include <string>
 #include <iostream>
 #include <fstream>
-#include <string>
+#include <sstream>
 
-#include <JSON\src\writer.h>
+#include <JSON/src/writer.h>
 
 
 //including our json info for easy access
@@ -33,137 +33,146 @@ struct PhysicsID
 
 static int staticBodyCount = 0;
 
-std::string get_file_contents(const char *filename)
+// number to be converted to a string
+string toString(int number)
 {
-	std::ifstream in(filename, std::ios::in | std::ios::binary);
-	if (in)
-	{
-		std::string contents;
-		in.seekg(0, std::ios::end);
-		contents.resize(in.tellg());
-		in.seekg(0, std::ios::beg);
-		in.read(&contents[0], contents.size());
-		in.close();
-		return(contents);
-	}
-	throw(errno);
-}
-void stuff()
-{
-	// Define the gravity vector.
-	b2Vec2 gravity(0.0f, -10.0f);
-
-	// Construct a world object, which will hold and simulate the rigid bodies.
-	b2World world(gravity);
-
-	// Define the ground body.
-	b2BodyDef groundBodyDef;
-	groundBodyDef.position.Set(0.0f, -10.0f);
-
-	// Call the body factory which allocates memory for the ground body
-	// from a pool and creates the ground box shape (also from a pool).
-	// The body is also added to the world.
-	b2Body* groundBody = world.CreateBody(&groundBodyDef);
-
-	// Define the ground box shape.
-	b2PolygonShape groundBox;
-
-	// The extents are the half-widths of the box.
-	groundBox.SetAsBox(50.0f, 10.0f);
-
-	// Add the ground fixture to the ground body.
-	groundBody->CreateFixture(&groundBox, 0.0f);
-
-	// Define the dynamic body. We set its position and call the body factory.
-	b2BodyDef bodyDef;
-	bodyDef.type = b2_dynamicBody;
-	bodyDef.position.Set(0.0f, 4.0f);
-	b2Body* body = world.CreateBody(&bodyDef);
-
-	// Define another box shape for our dynamic body.
-	b2PolygonShape dynamicBox;
-	dynamicBox.SetAsBox(1.0f, 1.0f);
-
-	// Define the dynamic body fixture.
-	b2FixtureDef fixtureDef;
-	fixtureDef.shape = &dynamicBox;
-
-	// Set the box density to be non-zero, so it will be dynamic.
-	fixtureDef.density = 1.0f;
-
-	// Override the default friction.
-	fixtureDef.friction = 0.3f;
-
-	// Add the shape to the body.
-	body->CreateFixture(&fixtureDef);
-
-	// Prepare for simulation. Typically we use a time step of 1/60 of a
-	// second (60Hz) and 10 iterations. This provides a high quality simulation
-	// in most game scenarios.
-	float32 timeStep = 1.0f / 60.0f;
-	int32 velocityIterations = 6;
-	int32 positionIterations = 2;
-
-	// This is our little game loop.
-	for (int32 i = 0; i < 60; ++i)
-	{
-		// Instruct the world to perform a single step of simulation.
-		// It is generally best to keep the time step and iterations fixed.
-		world.Step(timeStep, velocityIterations, positionIterations);
-
-		// Now print the position and angle of the body.
-		b2Vec2 position = body->GetPosition();
-		float32 angle = body->GetAngle();
-
-		printf("%4.2f %4.2f %4.2f\n", position.x, position.y, angle);
-	}
+    ostringstream convert;   // stream used for the conversion
+    convert << number;      // insert the textual representation of 'number' in the characters in the stream
+    return convert.str();
 }
 
-void processJSONStream(string jsonString)
-{
-	Json::Value root;   // will contains the root value after parsing.
-	Json::Reader reader;
-	bool parsingSuccessful = reader.parse(jsonString, root );
-	if ( !parsingSuccessful )
-	{
-		// report to the user the failure and their locations in the document.
-		std::cout  << "Failed to parse configuration\n"
-			<< reader.getFormatedErrorMessages();
-		return;
-	}
 
-	// Get the value of the member of root named 'encoding', return 'UTF-8' if there is no
-	// such member.
-	std::string encoding = root.get("encoding", "UTF-8" ).asString();
-	// Get the value of the member of root named 'encoding', return a 'null' value if
-	//// there is no such member.
-	//const Json::Value plugins = root["plug-ins"];
-	//for ( int index = 0; index < plugins.size(); ++index )  // Iterates over the sequence elements.
-	//	loadPlugIn( plugins[index].asString() );
+//std::string get_file_contents(const char *filename)
+//{
+//	std::ifstream in(filename, std::ios::in | std::ios::binary);
+//	if (in)
+//	{
+//		std::string contents;
+//		in.seekg(0, std::ios::end);
+//		contents.resize(in.tellg());
+//		in.seekg(0, std::ios::beg);
+//		in.read(&contents[0], contents.size());
+//		in.close();
+//		return(contents);
+//	}
+//	throw(errno);
+//}
+//void stuff()
+//{
+//	// Define the gravity vector.
+//	b2Vec2 gravity(0.0f, -10.0f);
+//
+//	// Construct a world object, which will hold and simulate the rigid bodies.
+//	b2World world(gravity);
+//
+//	// Define the ground body.
+//	b2BodyDef groundBodyDef;
+//	groundBodyDef.position.Set(0.0f, -10.0f);
+//
+//	// Call the body factory which allocates memory for the ground body
+//	// from a pool and creates the ground box shape (also from a pool).
+//	// The body is also added to the world.
+//	b2Body* groundBody = world.CreateBody(&groundBodyDef);
+//
+//	// Define the ground box shape.
+//	b2PolygonShape groundBox;
+//
+//	// The extents are the half-widths of the box.
+//	groundBox.SetAsBox(50.0f, 10.0f);
+//
+//	// Add the ground fixture to the ground body.
+//	groundBody->CreateFixture(&groundBox, 0.0f);
+//
+//	// Define the dynamic body. We set its position and call the body factory.
+//	b2BodyDef bodyDef;
+//	bodyDef.type = b2_dynamicBody;
+//	bodyDef.position.Set(0.0f, 4.0f);
+//	b2Body* body = world.CreateBody(&bodyDef);
+//
+//	// Define another box shape for our dynamic body.
+//	b2PolygonShape dynamicBox;
+//	dynamicBox.SetAsBox(1.0f, 1.0f);
+//
+//	// Define the dynamic body fixture.
+//	b2FixtureDef fixtureDef;
+//	fixtureDef.shape = &dynamicBox;
+//
+//	// Set the box density to be non-zero, so it will be dynamic.
+//	fixtureDef.density = 1.0f;
+//
+//	// Override the default friction.
+//	fixtureDef.friction = 0.3f;
+//
+//	// Add the shape to the body.
+//	body->CreateFixture(&fixtureDef);
+//
+//	// Prepare for simulation. Typically we use a time step of 1/60 of a
+//	// second (60Hz) and 10 iterations. This provides a high quality simulation
+//	// in most game scenarios.
+//	float32 timeStep = 1.0f / 60.0f;
+//	int32 velocityIterations = 6;
+//	int32 positionIterations = 2;
+//
+//	// This is our little game loop.
+//	for (int32 i = 0; i < 60; ++i)
+//	{
+//		// Instruct the world to perform a single step of simulation.
+//		// It is generally best to keep the time step and iterations fixed.
+//		world.Step(timeStep, velocityIterations, positionIterations);
+//
+//		// Now print the position and angle of the body.
+//		b2Vec2 position = body->GetPosition();
+//		float32 angle = body->GetAngle();
+//
+//		printf("%4.2f %4.2f %4.2f\n", position.x, position.y, angle);
+//	}
+//}
 
-	//setIndentLength( root["indent"].get("length", 3).asInt() );
-	//setIndentUseSpace( root["indent"].get("use_space", true).asBool() );
-
-	// ...
-	// At application shutdown to make the new configuration document:
-	// Since Json::Value has implicit constructor for all value types, it is not
-	//// necessary to explicitly construct the Json::Value object:
-	//root["encoding"] = getCurrentEncoding();
-	//root["indent"]["length"] = getCurrentIndentLength();
-	//root["indent"]["use_space"] = getCurrentIndentUseSpace();
-
-	Json::StyledWriter writer;
-	// Make a new JSON document for the configuration. Preserve original comments.
-	std::string outputConfig = writer.write( root );
-
-	// You can also use streams.  This will put the contents of any JSON
-	// stream at a particular sub-value, if you'd like.
-	std::cin >> root["subtree"];
-
-	// And you can write to a stream, using the StyledWriter automatically.
-	std::cout << root;
-
-}
+//void processJSONStream(string jsonString)
+//{
+//	Json::Value root;   // will contains the root value after parsing.
+//	Json::Reader reader;
+//	bool parsingSuccessful = reader.parse(jsonString, root );
+//	if ( !parsingSuccessful )
+//	{
+//		// report to the user the failure and their locations in the document.
+//		std::cout  << "Failed to parse configuration\n"
+//			<< reader.getFormatedErrorMessages();
+//		return;
+//	}
+//
+//	// Get the value of the member of root named 'encoding', return 'UTF-8' if there is no
+//	// such member.
+//	std::string encoding = root.get("encoding", "UTF-8" ).asString();
+//	// Get the value of the member of root named 'encoding', return a 'null' value if
+//	//// there is no such member.
+//	//const Json::Value plugins = root["plug-ins"];
+//	//for ( int index = 0; index < plugins.size(); ++index )  // Iterates over the sequence elements.
+//	//	loadPlugIn( plugins[index].asString() );
+//
+//	//setIndentLength( root["indent"].get("length", 3).asInt() );
+//	//setIndentUseSpace( root["indent"].get("use_space", true).asBool() );
+//
+//	// ...
+//	// At application shutdown to make the new configuration document:
+//	// Since Json::Value has implicit constructor for all value types, it is not
+//	//// necessary to explicitly construct the Json::Value object:
+//	//root["encoding"] = getCurrentEncoding();
+//	//root["indent"]["length"] = getCurrentIndentLength();
+//	//root["indent"]["use_space"] = getCurrentIndentUseSpace();
+//
+//	Json::StyledWriter writer;
+//	// Make a new JSON document for the configuration. Preserve original comments.
+//	std::string outputConfig = writer.write( root );
+//
+//	// You can also use streams.  This will put the contents of any JSON
+//	// stream at a particular sub-value, if you'd like.
+//	std::cin >> root["subtree"];
+//
+//	// And you can write to a stream, using the StyledWriter automatically.
+//	std::cout << root;
+//
+//}
 
 b2Body* IESoRWorld::addBodyToWorld(string bodyID, b2BodyDef* bodyDef)
 {
@@ -188,7 +197,7 @@ PhysicsID* IESoRWorld::createShapeID()
 	int bcnt = staticBodyCount++;
 
 	//Track the shape string
-	PhysicsID* shapeID = new PhysicsID(std::to_string((long double)bcnt));
+	PhysicsID* shapeID = new PhysicsID(toString(bcnt));
 
 	//Save our shape to the list of shapes
 	this->shapeList.push_back(shapeID);

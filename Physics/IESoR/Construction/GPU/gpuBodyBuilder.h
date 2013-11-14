@@ -2,7 +2,7 @@
 #define SHADERTOBODY_H
 
 #include <stdio.h>
-#include <IESoR\Construction\Bodies\outputsToBodies.h>
+#include <IESoR/Construction/Bodies/outputsToBodies.h>
 
 class ShaderToBody 
 {
