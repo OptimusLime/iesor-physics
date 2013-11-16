@@ -1,11 +1,24 @@
 #include "initializeWorld.h"
 
-WorldBuilder::WorldBuilder()
+//WorldBuilder::WorldBuilder()
+//{
+//	
+//}
+//
+//WorldBuilder::~WorldBuilder()
+//{
+//	
+//}
+
+
+BodyInformation::BodyInformation()
 {
 	
 }
 
-WorldBuilder::~WorldBuilder()
+BodyInformation::~BodyInformation()
 {
 	
 }
+
+
