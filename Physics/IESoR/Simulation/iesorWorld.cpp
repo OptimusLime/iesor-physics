@@ -181,17 +181,18 @@ IESoRWorld::IESoRWorld()
 {
 	this->interpolation =0;
 	accumulator = 0;
-	desiredFPS = 30;
+	desiredFPS = 60;
 	simulationRate = 1.0 / desiredFPS;
 	radians = 0;
-	
+
+
 	//this->bodyList = new vector<PhysicsID*>();
 	//this->shapeList = new vector<PhysicsID*>();
 	//this->bodyList = new Json::Value(Json::arrayValue);
 	//this->shapeList = new Json::Value(Json::arrayValue);
 
 	// Define the gravity vector.
-	b2Vec2 gravity(0.0f, -10.0f);
+	b2Vec2 gravity(0.0f, -15.0f);
 
 	// Construct a world object, which will hold and simulate the rigid bodies.
 	this->world = new b2World(gravity);
@@ -214,12 +215,24 @@ IESoRWorld::IESoRWorld()
 	b2PolygonShape groundBox;
 
 	// The extents are the half-widths of the box.
-	groundBox.SetAsBox(50.0f, 10.0f);
+	groundBox.SetAsBox(350.0, 10.0);
 
 	// Add the ground fixture to the ground body.
 	this->addShapeToBody(groundBody, &groundBox, 0.0f);
 	//groundBody->CreateFixture(&groundBox, 0.0f);
 	
+	//Pulling in some sample data for testing!
+	std::string bodyJSON = get_file_contents("../../../Physics/Data/sampleBody224632.json");
+
+	//pull in our JSON body plz
+	Json::Value inBody;
+	Json::Reader read;
+	read.parse(bodyJSON, inBody, true);
+
+	b2Vec2 canvas(200, 150);
+	this->loadBodyIntoWorld(inBody, canvas);
+
+
 	// Define the dynamic body. We set its position and call the body factory.
 	b2BodyDef bodyDef;
 	bodyDef.type = b2_dynamicBody;
@@ -245,6 +258,34 @@ IESoRWorld::IESoRWorld()
 
 	// Add the shape to the body.
 	this->addShapeToBody(body, &fixtureDef);
+	
+	// Define the circle body. We set its position and call the body factory.
+	b2BodyDef cDef;
+	cDef.type = b2_dynamicBody;
+	cDef.position.Set(10.0f, 24.0f);
+
+	//add body to world using definition
+	body = this->addBodyToWorld("circleTest", &cDef);
+
+	// Define another box shape for our dynamic body.
+	b2CircleShape dCircle;
+	dCircle.m_radius = 5.0;
+
+	// Define the dynamic body fixture.
+	b2FixtureDef circleDef;
+	circleDef.shape = &dCircle;
+	circleDef.restitution = .5;
+
+	// Set the box density to be non-zero, so it will be dynamic.
+	circleDef.density = 1.0f;
+
+	// Override the default friction.
+	circleDef.friction = 0.3f;
+
+	// Add the shape to the body.
+	this->addShapeToBody(body, &circleDef);
+
+
 
 	//Add some forces!
 	//body->ApplyAngularImpulse(.4, true);
@@ -416,6 +457,8 @@ string IESoRWorld::worldDrawList()
 //so it holds up the thread
 int IESoRWorld::updateWorld(double msUpdate)
 {
+	msUpdate = 4*msUpdate;
+
 	//we'll keep track of the number of times we simulated during this update
     int stepCount = 0;
 
@@ -447,6 +490,10 @@ int IESoRWorld::updateWorld(double msUpdate)
 			
 			//get our distance joint -- holder of physical joint info
 			b2DistanceJoint* dJoint = (b2DistanceJoint*)muscle->GetJoint();
+
+			//Javascript version
+			//muscle.SetLength(muscle.m_length + muscle.amplitude/this.scale*Math.cos(rad + muscle.phase*2*Math.PI));
+			//double lengthCalc = (dJoint->GetLength() + muscle->GetAmplitude()*cos(radians + muscle->GetPhase() * 2 * M_PI));
 
 			//fetch the original length of the distance joint, and add some fraction of that amount to the length
 			//depending on the current location in the muscle cycle
@@ -484,7 +531,7 @@ int IESoRWorld::updateWorld(double msUpdate)
 }
 
 
-std::vector<Json::Value>* IESoRWorld::getBodyEntities(Json::Value& inBody, b2Vec2 widthHeight, std::map<std::string, double>* intitialMorphology)
+std::vector<Json::Value> IESoRWorld::getBodyEntities(Json::Value& inBody, b2Vec2 widthHeight, std::map<std::string, double>& initMorph)
 {
 	//We're going to first convert our body into a collection of physics objects that need to be added to the environment
 	std::vector<Json::Value> entityVector;
@@ -531,11 +578,11 @@ std::vector<Json::Value>* IESoRWorld::getBodyEntities(Json::Value& inBody, b2Vec
         double nodeY = nodeLocation["y"].asDouble();
 
 		//here we actually modify the x and y values to fit into a certain sized box depending on the initial screen size/physics world size
-        xScaled = (nodeX)/divideForMax; //* maxAllowedWidth;
-        yScaled = (1.0f - nodeY) / divideForMaxHeight;// * maxAllowedHeight;
+        xScaled = (nodeX)/divideForMax* maxAllowedWidth;
+        yScaled = (1.0f - nodeY) / divideForMaxHeight* maxAllowedHeight;
 
         //FOR each node, we make a body with certain properties, then increment count
-		entityVector.push_back(Entity::CircleEntity(toString(bodyID), xScaled, yScaled, .01, 0));
+		entityVector.push_back(Entity::CircleEntity(toString(bodyID), xScaled, yScaled, maxAllowedWidth/35.0, 0));
 		
 		///what's the min/max xValues we've seen? We can determine how wide the creature is
         minX = min(minX, xScaled);
@@ -565,18 +612,17 @@ std::vector<Json::Value>* IESoRWorld::getBodyEntities(Json::Value& inBody, b2Vec
 	//We now have everything we need to identify our initial morphology
 	//we can see the inital width/height of the object
 	//as well as the offset (startx, starty) of the object
-	std::map<std::string, double> initMorph = *intitialMorphology;
 	initMorph["width"] = maxX - minX;
 	initMorph["height"] = maxY - minY;
 	initMorph["startX"] = minX;
 	initMorph["startY"] = minY;
 	initMorph["totalNodes"] = oNodes.size();
 
-	return &entityVector;
+	return entityVector;
 }
 
 
-void IESoRWorld::SetBody(Json::Value& entity)
+void IESoRWorld::setBody(Json::Value& entity)
 {
 	//we create a generic body def, to hold our body
 	b2BodyDef* bodyDef = new b2BodyDef();
@@ -620,9 +666,16 @@ void IESoRWorld::SetBody(Json::Value& entity)
 		//we create a fixture def for our new shape
 		b2FixtureDef fixture;
 
+		//We need high density objects so they don't float!
+		fixture.density = 25.0;
+		//lots of friction please!
+		fixture.friction = 1.0;
+		//less bouncing, more staying
+		fixture.restitution = .1;
+
 		//we're a circle shape, make it so
 		b2CircleShape node;
-
+		
 		//and we establish our radius
 		node.m_radius = entity["radius"].asDouble();
 
@@ -680,18 +733,20 @@ void IESoRWorld::SetBody(Json::Value& entity)
 }
 
 //pretty simple, we loop through and call the set body function that does all the work
-void IESoRWorld::SetBodies(vector<Json::Value>* entities)
+void IESoRWorld::setBodies(vector<Json::Value>* entities)
 {
 	//look through our vector of entities, and add each entity to the world
 	for (std::vector<Json::Value>::iterator it = entities->begin() ; it != entities->end(); ++it)
 	{
 		Json::Value e = *it;
-		this->SetBody(e);
+		string bodyID = e["bodyID"].asString();
+
+		this->setBody(e);
 	}
 }
 
 
-Bone* IESoRWorld::AddDistanceJoint(std::string sourceID, std::string targetID, Json::Value props)
+Bone* IESoRWorld::addDistanceJoint(std::string sourceID, std::string targetID, Json::Value props)
 {
 	//we're connecting two body objects together
 	//they should be defined by their IDs in our bodymap
@@ -734,10 +789,10 @@ Bone* IESoRWorld::AddDistanceJoint(std::string sourceID, std::string targetID, J
 }
 
 
-Muscle* IESoRWorld::AddMuscleJoint(std::string sourceID, std::string targetID, Json::Value props)
+Muscle* IESoRWorld::addMuscleJoint(std::string sourceID, std::string targetID, Json::Value props)
 {
 	//we add a standard distance joint
-	Bone* addedJoint = AddDistanceJoint(sourceID, targetID, props);
+	Bone* addedJoint = addDistanceJoint(sourceID, targetID, props);
 
 	//But our muscles have phase and amplitude, which adjust length during updates
 	double phase = 0;
@@ -767,7 +822,7 @@ Muscle* IESoRWorld::AddMuscleJoint(std::string sourceID, std::string targetID, J
 	return ms;
 }
 
-std::map<std::string, double>* IESoRWorld::LoadBodyIntoWorld(Json::Value& inBody, b2Vec2 widthHeight)
+std::map<std::string, double>* IESoRWorld::loadBodyIntoWorld(Json::Value& inBody, b2Vec2 widthHeight)
 {
 	//we use bodycount as a way to identify each physical object being added from the body information
 	int oBodyCount = world->GetBodyCount();
@@ -777,20 +832,20 @@ std::map<std::string, double>* IESoRWorld::LoadBodyIntoWorld(Json::Value& inBody
     map<string, double> morphology;
 
 	//here we use our body information to create all the necessary body additions to the world
-    vector<Json::Value>* entities = getBodyEntities(inBody, widthHeight, &morphology);
+    vector<Json::Value> entities = getBodyEntities(inBody, widthHeight, morphology);
 
 	//we'll quickly map and ID into a json point value
 	map<string, Json::Value> entityMap;
     
 	//this was we can access locations by the bodyID while determining connection distance
-	for (std::vector<Json::Value>::iterator it = entities->begin() ; it != entities->end(); ++it)
+	for (std::vector<Json::Value>::iterator it = entities.begin() ; it != entities.end(); ++it)
 	{
 		Json::Value e = *it;
 		entityMap[e["bodyID"].asString()] = e;
 	}
 
     //push our bodies into the system so that our joints have bodies to connect to
-	this->SetBodies(entities);
+	this->setBodies(&entities);
 
 	//Did we use LEO to calculate our body information -- affects the indexing procedure
 	bool useLEO = inBody["useLEO"].asBool();
@@ -812,10 +867,13 @@ std::map<std::string, double>* IESoRWorld::LoadBodyIntoWorld(Json::Value& inBody
 		Json::Value connectionObject = connections[i];
 		Json::Value cppnOutputs = connectionObject["cppnOutputs"];
 
+		int sID = atoi(connectionObject["sourceID"].asString().c_str());
+		int tID = atoi(connectionObject["targetID"].asString().c_str());
+
 		//To identify a given object in the physical world, we need to start with the current body count, and add the source id number
 		//This allows us to add multiple bodies to the same world (though this is recommended against, since it's easier to create separate worlds)
-		string sourceID = toString(oBodyCount) + connectionObject["sourceID"].asString();
-		string targetID = toString(oBodyCount) + connectionObject["targetID"].asString();
+		string sourceID = toString(oBodyCount + sID);
+		string targetID = toString(oBodyCount + tID);
                
 		 //we ignore connections that loop to themselves 
         if (sourceID == targetID)
@@ -834,7 +892,7 @@ std::map<std::string, double>* IESoRWorld::LoadBodyIntoWorld(Json::Value& inBody
 			double amp = (cppnOutputs[ampIx].asDouble() + 1) / 2;
 
 			//what's the distance been the source (x,y) and distance (x,y) -- that's the length of our connection
-			double connectionDistance = (float)sqrt(
+			double connectionDistance = sqrt(
 				pow(entityMap[sourceID]["x"].asDouble() - entityMap[targetID]["x"].asDouble(), 2) 
 				+ pow(entityMap[sourceID]["y"].asDouble() - entityMap[targetID]["y"].asDouble(), 2));
 
@@ -845,7 +903,7 @@ std::map<std::string, double>* IESoRWorld::LoadBodyIntoWorld(Json::Value& inBody
 			Json::Value props;
 
             if (amp < amplitudeCutoff)
-				this->AddDistanceJoint(sourceID, targetID, props);//, {frequencyHz: 3, dampingRatio:.3});
+				this->addDistanceJoint(sourceID, targetID, props);//, {frequencyHz: 3, dampingRatio:.3});
             else{				
 
 				//these are our hardcoded spring behaviors, could be altered by CPPN, but that seems risky
@@ -853,11 +911,13 @@ std::map<std::string, double>* IESoRWorld::LoadBodyIntoWorld(Json::Value& inBody
 				props["dampingRatio"] = .3;
 
 				//Phase/Amplitude set by our cppn outputs
-				props["phase"] = cppnOutputs[phaseIx].asString();
-				props["amplitude"] = .3f*connectionDistance*amp;
+				props["phase"] = cppnOutputs[phaseIx].asDouble();
+				//JS Version
+				//props["amplitude"] = .3f*connectionDistance*amp;
+				props["amplitude"] = .3f*amp;
 
                 //need to scale joints based on size of the screen - this is a bit odd, but should help multiple sizes behave the same!
-                this->AddMuscleJoint(sourceID, targetID, props);
+                this->addMuscleJoint(sourceID, targetID, props);
 			}
         }
 		catch (exception e)

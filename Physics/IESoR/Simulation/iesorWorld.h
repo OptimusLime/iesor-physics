@@ -26,14 +26,14 @@ class IESoRWorld
 
 		//std::map<std::string, double>* LoadBodyIntoWorld(BodyInformation* inBody, b2Vec2 widthHeight);
 		//std::vector<Entity*>* getBodyEntities(BodyInformation* inBody, b2Vec2 widthHeight, std::map<std::string, double>* intitialMorphology);
-		std::map<std::string, double>* LoadBodyIntoWorld(Json::Value& inBody, b2Vec2 widthHeight);
-		std::vector<Json::Value>* getBodyEntities(Json::Value& inBody, b2Vec2 widthHeight, std::map<std::string, double>* intitialMorphology);
+		std::map<std::string, double>* loadBodyIntoWorld(Json::Value& inBody, b2Vec2 widthHeight);
+		std::vector<Json::Value> getBodyEntities(Json::Value& inBody, b2Vec2 widthHeight, std::map<std::string, double>& intitialMorphology);
 
 		//setting bodies inside the world!
-		void SetBodies(std::vector<Json::Value>* entities);
+		void setBodies(std::vector<Json::Value>* entities);
         
-		Bone* AddDistanceJoint(std::string sourceID, std::string targetID, Json::Value props);
-		Muscle* AddMuscleJoint(std::string sourceID, std::string targetID, Json::Value props);
+		Bone* addDistanceJoint(std::string sourceID, std::string targetID, Json::Value props);
+		Muscle* addMuscleJoint(std::string sourceID, std::string targetID, Json::Value props);
 
 	private:
 		//Json::Value* bodyList;
@@ -59,7 +59,7 @@ class IESoRWorld
 		std::vector<Muscle*> muscleList;
 
 		//we set a new node body through this function
-		void SetBody(Json::Value& entity);
+		void setBody(Json::Value& entity);
 
 		PhysicsID* createShapeID();
 		

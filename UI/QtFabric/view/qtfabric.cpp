@@ -80,7 +80,7 @@ void QtFabric::physicsUpdate()
 {
 	//qDebug() << "Triggering physics update!";
 
-	world->updateWorld(33.333);
+	world->updateWorld(16.67);
 	this->drawToFabric(world->worldDrawList());
 }
 

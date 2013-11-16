@@ -27,7 +27,7 @@
         var halfDimensions = {w: width/2, h: height/2};
         var redrawCanvas;
 
-        var scale = 1;
+        var scale = 1.0;
 
 
 
@@ -223,13 +223,15 @@
             //now after all the changes, we render!
             canvas.renderAll();
         };
+
+        var count =0;
         function injectFabricObjects(fullJSON) {
 
             var str = JSON.stringify(fullJSON);
 
-            console.log(str);
+//            console.log(str);
             var replaceJSON = JSON.parse(str);
-            console.log(replaceJSON);
+//            console.log(replaceJSON);
 
             if (!canvas) {
                 canvas = new fabric.Canvas('fab', {
@@ -247,8 +249,8 @@
 
             insertObjects = replaceJSON.shapes;
 
-            console.log('injecting!');
-            console.log(insertObjects);
+//            console.log('injecting!');
+//            console.log(insertObjects);
 
 //            var scaleX = (width/visibleWindow.w), scaleY = (height/visibleWindow.h);
 
@@ -258,8 +260,8 @@
             for(var id in insertObjects) {
                 var canvasObj = insertObjects[id];
 
-                console.log('Insert: ');
-                console.log(canvasObj);
+//                console.log('Insert: ');
+//                console.log(canvasObj);
 
 
                 var fabObj = physicsToCanvas[id];
@@ -331,8 +333,14 @@
                         center = screenTransform(canvasObj.center);
                         radius = screenScale(canvasObj.radius);
                         color = canvasObj.color || 'green';
+                        var stroke = canvasObj.stroke || '#147';
+                        var sw = .5;
 
-                        props = { top: parseFloat(center.y) - bodyOffset.y, left: parseFloat(center.x) + bodyOffset.x, radius: parseFloat(radius), fill: color };
+                        props = { top: parseFloat(center.y) - bodyOffset.y - sw/2, left: parseFloat(center.x) + parseFloat(bodyOffset.x) + sw/2, radius: radius,
+                            fill: color,
+                            stroke: stroke,
+                            strokeWidth: sw
+                        };
 
                         if (!fabObj)
                             fabObj = new fabric.Circle(props);
@@ -384,12 +392,14 @@
         }
 
 
+        var c=0;
         //let's see if we can do 30 fps!
         var animate = function()
         {
             jsBridgeObject.jsCallPhysicsUpdate();
 
-            setTimeout(animate, 33);
+//            if(c++<10)
+            setTimeout(animate, 16.67);
         };
 
         setTimeout(animate, 0);
