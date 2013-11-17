@@ -3,5 +3,6 @@
         <file>html/js/fabric.min.js</file>
         <file>html/basic.html</file>
         <file alias="neatjs">html/js/gpu/build/build.js</file>
+        <file>html/js/three.min.js</file>
     </qresource>
 </RCC>

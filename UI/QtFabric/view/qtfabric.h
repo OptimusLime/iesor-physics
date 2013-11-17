@@ -26,8 +26,6 @@ protected slots:
 private:
 	JSBridge* bridgeObject;
 	QWebView* view;
-	QString fabric;
-	QString neatjs;
 	QVector<std::string> jsonQueue;
 	bool loadedView;
 	IESoRWorld* world;

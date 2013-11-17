@@ -4,6 +4,12 @@
 #include <QtWebKit/QWebView>
 #include <QtWebKit/QWebFrame>
 
+
+static QString fabric;
+static QString neatjs;
+static QString threejs;
+
+
 QString readFile(QString filename) {
 	QFile file(filename);
 	if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
@@ -20,6 +26,17 @@ QString readFile(QString filename) {
 	return QString(total);
 }
 
+
+QString readFileToString(QString filePath)
+{	
+	QFile file;
+	file.setFileName(filePath);
+	file.open(QIODevice::ReadOnly);
+	QString allRead = file.readAll();
+	file.close();
+	return allRead;
+}
+
 QtFabric::QtFabric()
 {
 	//ui.setupUi(this);
@@ -28,6 +45,10 @@ QtFabric::QtFabric()
 
 	//enable webview inspector
 	QWebSettings::globalSettings()->setAttribute(QWebSettings::DeveloperExtrasEnabled, true);
+
+	//add in webgl support
+	QWebSettings::globalSettings()->setAttribute(QWebSettings::WebGLEnabled, true);
+
 
 	view = new QWebView(this);
 	view->resize(this->size());
@@ -45,20 +66,11 @@ QtFabric::QtFabric()
 
 	this->setCentralWidget(view);
 
-	QFile file;
-	file.setFileName(":/QtFabric/html/js/fabric.min.js");
-	file.open(QIODevice::ReadOnly);
-	fabric = file.readAll();
-	file.close();
-
-
-	QFile neatBuild;
-	neatBuild.setFileName(":/QtFabric/neatjs");
-	neatBuild.open(QIODevice::ReadOnly);
-	neatjs = neatBuild.readAll();
-	neatBuild.close();
-
-
+	//pull in our js required libraries
+	fabric = readFileToString(":/QtFabric/html/js/fabric.min.js");
+	neatjs = readFileToString(":/QtFabric/neatjs");
+	threejs = readFileToString(":/QtFabric/html/js/three.min.js");
+	
 	bridgeObject = new JSBridge(this);
 	connect(view->page()->mainFrame(), 
 		SIGNAL(javaScriptWindowObjectCleared()),
@@ -66,8 +78,6 @@ QtFabric::QtFabric()
 		SLOT(addJavaScriptObject()));
 
 	connect(bridgeObject, SIGNAL(triggerUpdate()), this, SLOT(physicsUpdate()));
-
-
 
 
 	QString r =  readFile(":/QtFabric/html/basic.html");
@@ -198,48 +208,16 @@ void QtFabric::finishLoading(bool)
 	//pull in neatjs code for now
 	view->page()->mainFrame()->evaluateJavaScript(neatjs);
 
+	//need code for doing GPU stuff in webkit for right now
+	view->page()->mainFrame()->evaluateJavaScript(threejs);
+
 	//we also want to use fabric code too
 	view->page()->mainFrame()->evaluateJavaScript(fabric);
-	////view->page()->mainFrame()->evaluateJavaScript("genericFabricAdd()");
 
 	loadedView = true;
 
 	if(jsonQueue.size())
 		processDrawQueue();
-
-
-
-	//QVariant jsonRect = createRectangle("600", "200", "100", "50", "#836948");	
-	//QVariant jsonCircle = createCircle("200", "400", "65", "#369");	
-	//QVariant jsonTriangle = createTriangle("100", "25", "100", "50", "#953");	
-
-	//addProperties(&jsonRect, "type", "Rect");
-	//addProperties(&jsonRect, "topLeft", createPoint("600", "200"));
-	//addProperties(&jsonRect, "widthHeight", createWidthHeight("100", "50"));
-	//addProperties(&jsonRect, "color", "#369");
-
-	//create rect with the above props and named rect1
-	//QMap<QString, QVariant> jsonShapes;
-	//addProperties(&jsonShapes, "rect1", jsonRect);
-	//addProperties(&jsonShapes, "circle1", jsonCircle);
-	//addProperties(&jsonShapes, "triangle1", jsonTriangle);
-	//
-	//SimpleJson* sj = new SimpleJson();
-	//QString json = sj->encode(jsonShapes);
-
-	//view->page()->mainFrame()->evaluateJavaScript("injectFabricObjects(" + json + ")");
-
-	//QMap<QString, QVariant> jsonVariant;
-	//jsonVariant["sup"] = QString("diddle");
-
-	//SimpleJson* sj = new SimpleJson();
-	//QString json = sj->encode(jsonVariant);
-
-	////this will parse the string as JSON, and send in a json object to our evaluated callback
-	//QVariant f1result = view->page()->mainFrame()->evaluateJavaScript("wakkawakka("+ json + ")");
-	//   qDebug() << f1result.toString();
-
-
 }
 
 QtFabric::~QtFabric()
