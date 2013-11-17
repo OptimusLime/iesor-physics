@@ -1,7 +1,7 @@
-<RCC>   
+<RCC>
     <qresource prefix="/QtFabric">
         <file>html/js/fabric.min.js</file>
         <file>html/basic.html</file>
+        <file alias="neatjs">html/js/gpu/build/build.js</file>
     </qresource>
 </RCC>
-                                                                                             

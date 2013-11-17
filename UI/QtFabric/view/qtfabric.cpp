@@ -52,6 +52,12 @@ QtFabric::QtFabric()
 	file.close();
 
 
+	QFile neatBuild;
+	neatBuild.setFileName(":/QtFabric/neatjs");
+	neatBuild.open(QIODevice::ReadOnly);
+	neatjs = neatBuild.readAll();
+	neatBuild.close();
+
 
 	bridgeObject = new JSBridge(this);
 	connect(view->page()->mainFrame(), 
@@ -189,6 +195,10 @@ void QtFabric::drawToFabric(std::string json)
 
 void QtFabric::finishLoading(bool)
 {
+	//pull in neatjs code for now
+	view->page()->mainFrame()->evaluateJavaScript(neatjs);
+
+	//we also want to use fabric code too
 	view->page()->mainFrame()->evaluateJavaScript(fabric);
 	////view->page()->mainFrame()->evaluateJavaScript("genericFabricAdd()");
 
