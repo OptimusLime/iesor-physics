@@ -5,4 +5,5 @@
         <file alias="neatjs">html/js/gpu/build/build.js</file>
         <file>html/js/three.min.js</file>
     </qresource>
-</RCC>
+</RCC>                         
+ 

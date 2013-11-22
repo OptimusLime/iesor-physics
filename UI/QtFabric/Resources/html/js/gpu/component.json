@@ -1,18 +1,24 @@
 {
-    "name": "iesorGPU",
-    "repo": "OptimusLime/iesorGPU",
-    "description": "Turns a network into a GPU shader -- runs on webgl",
-    "version": "0.1.0",
-    "private" : "true",
-    "keywords": ["Neural Networks", "ANN", "CPPN", "NEAT"],
-    "dependencies": {
-        "OptimusLime/cppnjs" : "*",
-        "OptimusLime/neatjs" : "*"
-    },
-    "development": {},
-    "license": "MIT",
-    "main": "gpu.js",
-    "scripts": [
-        "gpu.js"
-    ]
+  "name": "iesorGPU",
+  "repo": "OptimusLime/iesorGPU",
+  "description": "Turns a network into a GPU shader -- runs on webgl",
+  "version": "0.1.0",
+  "private": "true",
+  "keywords": [
+    "Neural Networks",
+    "ANN",
+    "CPPN",
+    "NEAT"
+  ],
+  "dependencies": {
+    "OptimusLime/cppnjs": "*",
+    "OptimusLime/neatjs": "*"
+  },
+  "development": {},
+  "license": "MIT",
+  "main": "gpu.js",
+  "scripts": [
+    "gpu.js"
+  ],
+  "remotes": []
 }

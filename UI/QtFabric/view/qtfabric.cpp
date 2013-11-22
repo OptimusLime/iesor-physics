@@ -3,27 +3,43 @@
 #include "QtFabric/bridge/JSBridge.h"
 #include <QtWebKit/QWebView>
 #include <QtWebKit/QWebFrame>
-
+#include <QtCore/QMap>
+#include <QtCore/QVector>
+#include <string>
+#include <sstream>
 
 static QString fabric;
 static QString neatjs;
 static QString threejs;
+static QString sampleGenome;
+static bool drawToJS = false;
+
+enum ActivationInt
+{
+	BipolarSigmoid = 0,
+	Gaussian,
+	StepFunction,
+	Sine,
+	Linear
+};
 
 
-QString readFile(QString filename) {
-	QFile file(filename);
-	if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-		return NULL;
-	}
+Q_DECLARE_METATYPE(QVector<int>)
 
-	QByteArray total;
-	QByteArray line;
-	while (!file.atEnd()) {
-		line = file.read(1024);
-		total.append(line);
-	}
+	QString readFile(QString filename) {
+		QFile file(filename);
+		if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+			return NULL;
+		}
 
-	return QString(total);
+		QByteArray total;
+		QByteArray line;
+		while (!file.atEnd()) {
+			line = file.read(1024);
+			total.append(line);
+		}
+
+		return QString(total);
 }
 
 
@@ -70,7 +86,7 @@ QtFabric::QtFabric()
 	fabric = readFileToString(":/QtFabric/html/js/fabric.min.js");
 	neatjs = readFileToString(":/QtFabric/neatjs");
 	threejs = readFileToString(":/QtFabric/html/js/three.min.js");
-	
+
 	bridgeObject = new JSBridge(this);
 	connect(view->page()->mainFrame(), 
 		SIGNAL(javaScriptWindowObjectCleared()),
@@ -80,12 +96,16 @@ QtFabric::QtFabric()
 	connect(bridgeObject, SIGNAL(triggerUpdate()), this, SLOT(physicsUpdate()));
 
 
+	world = new IESoRWorld();	
+	//sampleGenome = world->loadDataFile("jsGenome224532.json").c_str();
+	sampleGenome = world->loadDataFile("jsGenome142856.json").c_str();
+
+
 	QString r =  readFile(":/QtFabric/html/basic.html");
 	view->setHtml(r);
 	qDebug() << "contents: " << r;
 
 
-	world = new IESoRWorld();
 	this->drawToFabric(world->worldDrawList());
 
 
@@ -195,13 +215,297 @@ void QtFabric::processDrawQueue()
 }
 void QtFabric::drawToFabric(std::string json)
 {
-	jsonQueue.push_back(json);
+	if(drawToJS)
+		jsonQueue.push_back(json);
 
 	if(loadedView)
 		processDrawQueue();	
+}
+
+// number to be converted to a string
+std::string nToS(int number)
+{
+	std::ostringstream convert;   // stream used for the conversion
+	convert << number;      // insert the textual representation of 'number' in the characters in the stream
+	return convert.str();
+}
+
+int activationToInteger(QString activationType)
+{
+	if(activationType == "BipolarSigmoid")
+		return ActivationInt::BipolarSigmoid;
+	else if(activationType == "Gaussian")
+		return ActivationInt::Gaussian;
+	else if(activationType == "StepFunction")
+		return ActivationInt::StepFunction;
+	else if(activationType == "Sine")
+		return ActivationInt::Sine;
+	else if(activationType == "input")
+		return ActivationInt::Linear;
+	else
+	{
+		printf("No known activation type!");
+		throw 1;
+	}
+}
+
+static double bipolarSigmoid(double val)
+{
+	 return (2.0 / (1.0 + exp(-4.9 * val))) - 1.0;
+}
+static double sine(double val)
+{
+	return sin(val);
+}
+
+static double sine2(double val)
+{
+	return sin(2*val);
+}
+
+static double stepFunction(double val)
+{
+	if(val<=0.0)
+		return 0.0;
+	else
+		return 1.0;
+}
+
+static double linear(double val)
+{
+	return val;
+}
+
+static double gaussian(double val)
+{
+	 return 2 * exp(-pow(val * 2.5, 2)) - 1;
+}
+
+
+void activateNetwork(double* inputs, 
+	double* registers, 
+	double* weights, 
+	int* nodeOrder, 
+	int** registerArrays, 
+	int** weightArrays, 
+	int* nodeIncoming, 
+	int* activationTypes, 
+	int nodeCount, 
+	int inputCount, 
+	int biasCount)
+{
+	
+	int totalInputs = inputCount + biasCount;
+	
+		//set bias
+	for(int i=0; i < biasCount; i++)
+		registers[i] = 1.0;
+
+	//set inputs
+	for(int i=0; i < inputCount; i++)
+		registers[i+biasCount] = inputs[i];
+	
+
+
+	for(int i=0; i < nodeCount; i++)
+	{
+		//activate in order
+		int tgtNeuronIx = nodeOrder[i];
+
+		//skip inputs and bias
+		if(tgtNeuronIx < totalInputs)
+			continue;
+
+
+		//Hello. Are you there?
+
+
+		//Ix
+
+		int* regIxArray = registerArrays[tgtNeuronIx];
+		int* weightIxArray = weightArrays[tgtNeuronIx];
+
+		int nCount = nodeIncoming[tgtNeuronIx];
+		int aType = activationTypes[tgtNeuronIx];
+
+		double nodeSum = 0;
+
+		for(int r=0; r < nCount; r++)
+		{
+			nodeSum += registers[regIxArray[r]]*weights[weightIxArray[r]];
+		}
+
+		switch(aType)
+		{
+			case ActivationInt::BipolarSigmoid:
+				registers[tgtNeuronIx] = bipolarSigmoid(nodeSum);
+				break;
+
+			case ActivationInt::Gaussian:
+				registers[tgtNeuronIx] = gaussian(nodeSum);
+				break;
+			case ActivationInt::Linear:
+				registers[tgtNeuronIx] = linear(nodeSum);
+				break;
+			case ActivationInt::Sine:
+				registers[tgtNeuronIx] = sine(nodeSum);
+				break;
+			case ActivationInt::StepFunction:
+				registers[tgtNeuronIx] = stepFunction(nodeSum);
+				break;
+		}
+
+		printf("tgtIx %d - calc: %f \n", tgtNeuronIx, registers[tgtNeuronIx]);
+
+		//register done, move on!
+	}
 
 }
 
+
+void convertJSONGenome(QWebView* view, QMap<QString, QVariant>& json)
+{
+	//nodeOrder
+	//nodeArrays
+	//QVector<int>& nOrder = json["nodeOrder"].convert(QVariant::ar;
+
+	//biasCount: cppn.biasNeuronCount,
+	//inputCount: cppn.inputNeuronCount,
+	//nodeCount: cppn.totalNeuronCount,
+	//connectionCount: cppn.connections.length,
+
+	int biasCount = json["biasCount"].toInt();
+	int inputCount = json["inputCount"].toInt();
+	int outputCount = json["outputCount"].toInt();
+
+	int nodeCount = json["nodeCount"].toInt();
+	int connectionCount = json["connectionCount"].toInt();
+
+	//have all the info to create weights and registers
+	double* weights = new double[connectionCount]; 
+	double* registers = new double[nodeCount];
+
+	int** registerArrays = new int*[nodeCount];
+	int** weightArrays = new int*[nodeCount];
+
+	int* nodeIncoming = new int[nodeCount];	
+
+	int* activationTypes = new int[nodeCount];	
+
+	int* nodeOrder = new int[nodeCount];	
+
+	QList<QVariant> nodeOrderJSON = json["nodeOrder"].toList();
+	int nIx = 0;
+	//we loop through all our ordered nodes to create a node execution list
+	for (QList<QVariant>::iterator it = nodeOrderJSON.begin() ; it != nodeOrderJSON.end(); ++it)
+	{
+		printf("In order: %d \n",  it->toInt());
+		nodeOrder[nIx++] = it->toInt();
+	}
+
+	QList<QVariant> weightsJSON = json["weights"].toList();
+	nIx = 0;
+	//we loop through all our ordered nodes to create a node execution list
+	for (QList<QVariant>::iterator it = weightsJSON.begin() ; it != weightsJSON.end(); ++it)
+	{
+		printf("Weight: %f \n",  it->toDouble());
+		weights[nIx++] = it->toDouble();
+	}
+
+	//QVector<int> vecOrder = json["nodeOrder"].value<QVector<int>>();
+
+	QMap<QString, QVariant> nodeArrays = json["nodeArrays"].toMap();
+
+	for(int i=biasCount + inputCount; i < nodeCount; i++)
+	{
+		//need to look inside node arrays
+		QMap<QString, QVariant> nodeInfo = nodeArrays[nToS(i).c_str()].toMap();
+
+		int inCount = nodeInfo["inCount"].toInt();
+		nodeIncoming[i] = inCount;
+		QList<QVariant> registerList = nodeInfo["registerList"].toList();
+		QList<QVariant> weightList = nodeInfo["weightList"].toList();
+
+		//this integer array holds the order of registers to draw from
+		registerArrays[i] = new int[inCount];
+		weightArrays[i] = new int[inCount];
+
+		nIx = 0;
+		//we loop through all our registers to query
+		for (QList<QVariant>::iterator it = registerList.begin() ; it != registerList.end(); ++it)
+		{
+			printf("Register sampling: %d \n",  it->toInt());
+			registerArrays[i][nIx++] = it->toInt();
+		}
+		//do the same for the weight indices
+		nIx = 0;
+		for (QList<QVariant>::iterator it = weightList.begin() ; it != weightList.end(); ++it)
+		{
+			printf("Weight index: %d \n",  it->toInt());
+			weightArrays[i][nIx++] = it->toInt();
+		}
+
+		//handle activation functions
+		QString activation = nodeInfo["activation"].toString();
+		activationTypes[i] = activationToInteger(activation);
+
+	}
+
+
+	//we have enough to do activation now, I believe
+
+
+	//double* weights = new double[connectionCount]; 
+	//double* registers = new double[nodeCount];
+	//int** registerArrays = new int*[nodeCount];
+	//int** weightArrays = new int*[nodeCount];
+	//int* nodeIncoming = new int[nodeCount];		
+	//int* activationTypes = new int[nodeCount];	
+	//int* nodeOrder = new int[nodeCount];	
+
+
+	int totalInputs = inputCount + biasCount;
+
+	//set bias = 1 
+	for(int i=0; i < biasCount; i++)
+		registers[i] = 1.0;
+
+	QMap<QString, QVariant> inOut = view->page()->mainFrame()->evaluateJavaScript("randomEvaluation(" + sampleGenome + ")").toMap();
+
+	QList<QVariant> inputs = inOut["inputs"].toList();
+	
+	QList<QVariant> neuronSignals = inOut["signals"].toList();
+	QList<QVariant> startSignals = inOut["startSignals"].toList();
+	QList<QVariant> activationFunctions = inOut["activations"].toList();
+
+	//outputs pulled from the list
+	QList<QVariant> outputs = inOut["outputs"].toList();	
+	
+	for(int i=0; i < nodeCount; i++)
+	{
+		printf("%d: \n", i);
+		printf("start signals: %f \n", startSignals[i]);
+		printf("real signals: %f \n", neuronSignals[i]);
+		printf("registers: %f \n", registers[i]);
+		QString act = activationFunctions[i].toString();
+		
+		printf("actFunction %s \n", act.toStdString().c_str());
+
+
+	}
+
+	for(int i=0; i < outputCount; i++)
+	{
+		int ix = i+totalInputs;
+		printf("real %d - outputs: %f \n", ix, outputs[i].toDouble());
+		printf("tgtIx %d - registers: %f \n", ix, registers[ix]);
+		//printf("Output real: %f, output calc: %f \n", outputs[i], registers[i+totalInputs]);
+	}
+
+	printf("comp over");
+
+
+}
 
 void QtFabric::finishLoading(bool)
 {
@@ -213,6 +517,12 @@ void QtFabric::finishLoading(bool)
 
 	//we also want to use fabric code too
 	view->page()->mainFrame()->evaluateJavaScript(fabric);
+
+	//do a quick genome test please
+	QVariant genomeTest = view->page()->mainFrame()->evaluateJavaScript("doGPU(" + sampleGenome + ")");
+
+	//testing conversion to genome
+	convertJSONGenome(view, genomeTest.toMap());
 
 	loadedView = true;
 

@@ -176,6 +176,13 @@ b2Fixture* IESoRWorld::addShapeToBody(b2Body* body, b2FixtureDef* fixDef)
 	return fix;
 }
 
+//laod object from data folder -- simple!!
+std::string IESoRWorld::loadDataFile(std::string dataName)
+{
+	std::string filePath = "../../../Physics/Data/" + dataName;
+	return get_file_contents(filePath.c_str());
+}
+
 
 IESoRWorld::IESoRWorld()
 {
@@ -222,7 +229,7 @@ IESoRWorld::IESoRWorld()
 	//groundBody->CreateFixture(&groundBox, 0.0f);
 	
 	//Pulling in some sample data for testing!
-	std::string bodyJSON = get_file_contents("../../../Physics/Data/sampleBody224632.json");
+	std::string bodyJSON = loadDataFile("sampleBody224632.json");
 
 	//pull in our JSON body plz
 	Json::Value inBody;

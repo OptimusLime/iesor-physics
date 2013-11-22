@@ -31,6 +31,8 @@ class IESoRWorld
 
 		//setting bodies inside the world!
 		void setBodies(std::vector<Json::Value>* entities);
+
+		std::string loadDataFile(std::string dataName);
         
 		Bone* addDistanceJoint(std::string sourceID, std::string targetID, Json::Value props);
 		Muscle* addMuscleJoint(std::string sourceID, std::string targetID, Json::Value props);

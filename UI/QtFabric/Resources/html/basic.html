@@ -13,6 +13,61 @@
 
 
 
+        function doGPU(ngJSON)
+        {
+            var gpu = require('iesorGPU');
+            console.log(gpu);
+
+            return gpu.NeatGenomeToByteCode(ngJSON);
+        }
+
+        var lastCPPN;
+
+        function randomEvaluation(ngJSON)
+        {
+            var gpu = require('iesorGPU');
+
+            if(!lastCPPN)
+            {
+                var ng = gpu.convertToNeatObject(ngJSON);
+                lastCPPN = ng.networkDecode();
+            }
+
+            var inputs = [];
+            for(var i=0; i < lastCPPN.inputNeuronCount; i++)
+                inputs.push(Math.random());
+
+//            console.log(gpu);
+
+
+            lastCPPN.clearSignals();
+            var oldSignals = [].slice.apply(lastCPPN.neuronSignals);
+            lastCPPN.setInputSignals(inputs);
+            lastCPPN.recursiveActivation();
+
+            var outputs = [];
+            for(var i=0; i< lastCPPN.outputNeuronCount; i++)
+                outputs.push(lastCPPN.getOutputSignal(i));
+
+            var activations = [];
+            for(var i=0; i < lastCPPN.activationFunctions.length; i++)
+            {
+                var aFunc = lastCPPN.activationFunctions[i];
+                if(typeof aFunc == "object")
+                    activations.push(aFunc.functionID);
+                else
+                    activations.push(aFunc);
+            }
+
+
+            return {inputs: inputs,
+                outputs: outputs,
+                signals: lastCPPN.neuronSignals,
+                startSignals: oldSignals,
+                activations: activations};
+        }
+
+
 
         var canvas;
 
