@@ -7,5 +7,7 @@
 #include <IESoR/Simulation/Record/recordWorld.h>
 #include <IESoR/Construction/Bodies/outputsToBodies.h>
 #include <IESoR/Construction/GPU/gpuBodyBuilder.h>
+#include <IESoR/Network/iesorBody.h>
+#include <IESoR/Network/network.h>
 
 #endif //IESOR_H

@@ -7,6 +7,15 @@ set(IESOR_World_HDRS
 	Simulation/iesorWorld.h
 )
 
+set(IESOR_Body_SRCS
+	Network/iesorBody.cpp
+	Network/network.cpp
+)
+set(IESOR_Body_HDRS
+	Network/iesorBody.h
+	Network/network.h
+)
+
 set(IESOR_Init_SRCS
 	Simulation/Initialize/initializeWorld.cpp
 )
@@ -44,12 +53,15 @@ if(IESOR_BUILD_SHARED)
 		${IESOR_General_HDRS}
 		${IESOR_World_HDRS}
 		${IESOR_World_SRCS}
+		${IESOR_Body_HDRS}
+		${IESOR_Body_SRCS}
 		${IESOR_Record_HDRS}
 		${IESOR_Record_SRCS}
 		${IESOR_Init_HDRS}
 		${IESOR_Init_SRCS}
 		${IESOR_Construction_HDRS}
 		${IESOR_Construction_SRCS}
+		
 		)
 		
 		
@@ -70,6 +82,8 @@ if(IESOR_BUILD_STATIC)
 		${IESOR_General_HDRS}
 		${IESOR_World_HDRS}
 		${IESOR_World_SRCS}
+		${IESOR_Body_HDRS}
+		${IESOR_Body_SRCS}
 		${IESOR_Record_HDRS}
 		${IESOR_Record_SRCS}
 		${IESOR_Init_HDRS}
@@ -94,6 +108,7 @@ source_group(Simulation FILES ${IESOR_World_SRCS} ${IESOR_World_HDRS})
 source_group(Simulation\\Initialize FILES ${IESOR_Init_SRCS} ${IESOR_Init_HDRS})
 source_group(Simulation\\Record FILES ${IESOR_Record_SRCS} ${IESOR_Record_HDRS})
 source_group(Construction FILES ${IESOR_Construction_SRCS} ${IESOR_Construction_HDRS})
+source_group(Network FILES ${IESOR_Body_SRCS} ${IESOR_Body_HDRS})
 source_group(Include FILES ${IESOR_General_HDRS})
 
 #Think about adding in iesor installation for linux systems

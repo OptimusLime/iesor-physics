@@ -12,16 +12,16 @@ static QString fabric;
 static QString neatjs;
 static QString threejs;
 static QString sampleGenome;
-static bool drawToJS = false;
+static bool drawToJS = true;
 
-enum ActivationInt
-{
-	BipolarSigmoid = 0,
-	Gaussian,
-	StepFunction,
-	Sine,
-	Linear
-};
+//enum ActivationInt
+//{
+//	BipolarSigmoid = 0,
+//	Gaussian,
+//	StepFunction,
+//	Sine,
+//	Linear
+//};
 
 
 Q_DECLARE_METATYPE(QVector<int>)
@@ -229,138 +229,26 @@ std::string nToS(int number)
 	convert << number;      // insert the textual representation of 'number' in the characters in the stream
 	return convert.str();
 }
+//
+//int activationToInteger(QString activationType)
+//{
+//	if(activationType == "BipolarSigmoid")
+//		return ActivationInt::BipolarSigmoid;
+//	else if(activationType == "Gaussian")
+//		return ActivationInt::Gaussian;
+//	else if(activationType == "StepFunction")
+//		return ActivationInt::StepFunction;
+//	else if(activationType == "Sine")
+//		return ActivationInt::Sine;
+//	else if(activationType == "input")
+//		return ActivationInt::Linear;
+//	else
+//	{
+//		printf("No known activation type!");
+//		throw 1;
+//	}
+//}
 
-int activationToInteger(QString activationType)
-{
-	if(activationType == "BipolarSigmoid")
-		return ActivationInt::BipolarSigmoid;
-	else if(activationType == "Gaussian")
-		return ActivationInt::Gaussian;
-	else if(activationType == "StepFunction")
-		return ActivationInt::StepFunction;
-	else if(activationType == "Sine")
-		return ActivationInt::Sine;
-	else if(activationType == "input")
-		return ActivationInt::Linear;
-	else
-	{
-		printf("No known activation type!");
-		throw 1;
-	}
-}
-
-static double bipolarSigmoid(double val)
-{
-	 return (2.0 / (1.0 + exp(-4.9 * val))) - 1.0;
-}
-static double sine(double val)
-{
-	return sin(val);
-}
-
-static double sine2(double val)
-{
-	return sin(2*val);
-}
-
-static double stepFunction(double val)
-{
-	if(val<=0.0)
-		return 0.0;
-	else
-		return 1.0;
-}
-
-static double linear(double val)
-{
-	return val;
-}
-
-static double gaussian(double val)
-{
-	 return 2 * exp(-pow(val * 2.5, 2)) - 1;
-}
-
-
-void activateNetwork(double* inputs, 
-	double* registers, 
-	double* weights, 
-	int* nodeOrder, 
-	int** registerArrays, 
-	int** weightArrays, 
-	int* nodeIncoming, 
-	int* activationTypes, 
-	int nodeCount, 
-	int inputCount, 
-	int biasCount)
-{
-	
-	int totalInputs = inputCount + biasCount;
-	
-		//set bias
-	for(int i=0; i < biasCount; i++)
-		registers[i] = 1.0;
-
-	//set inputs
-	for(int i=0; i < inputCount; i++)
-		registers[i+biasCount] = inputs[i];
-	
-
-
-	for(int i=0; i < nodeCount; i++)
-	{
-		//activate in order
-		int tgtNeuronIx = nodeOrder[i];
-
-		//skip inputs and bias
-		if(tgtNeuronIx < totalInputs)
-			continue;
-
-
-		//Hello. Are you there?
-
-
-		//Ix
-
-		int* regIxArray = registerArrays[tgtNeuronIx];
-		int* weightIxArray = weightArrays[tgtNeuronIx];
-
-		int nCount = nodeIncoming[tgtNeuronIx];
-		int aType = activationTypes[tgtNeuronIx];
-
-		double nodeSum = 0;
-
-		for(int r=0; r < nCount; r++)
-		{
-			nodeSum += registers[regIxArray[r]]*weights[weightIxArray[r]];
-		}
-
-		switch(aType)
-		{
-			case ActivationInt::BipolarSigmoid:
-				registers[tgtNeuronIx] = bipolarSigmoid(nodeSum);
-				break;
-
-			case ActivationInt::Gaussian:
-				registers[tgtNeuronIx] = gaussian(nodeSum);
-				break;
-			case ActivationInt::Linear:
-				registers[tgtNeuronIx] = linear(nodeSum);
-				break;
-			case ActivationInt::Sine:
-				registers[tgtNeuronIx] = sine(nodeSum);
-				break;
-			case ActivationInt::StepFunction:
-				registers[tgtNeuronIx] = stepFunction(nodeSum);
-				break;
-		}
-
-		printf("tgtIx %d - calc: %f \n", tgtNeuronIx, registers[tgtNeuronIx]);
-
-		//register done, move on!
-	}
-
-}
 
 
 void convertJSONGenome(QWebView* view, QMap<QString, QVariant>& json)
@@ -447,7 +335,7 @@ void convertJSONGenome(QWebView* view, QMap<QString, QVariant>& json)
 
 		//handle activation functions
 		QString activation = nodeInfo["activation"].toString();
-		activationTypes[i] = activationToInteger(activation);
+		//activationTypes[i] = activationToInteger(activation);
 
 	}
 
