@@ -23,6 +23,15 @@ static bool drawToJS = true;
 //	Linear
 //};
 
+//TODO: Make a helper singleton for these functions
+Json::Value parseJSON(std::string inString)
+{
+		//pull in our JSON body plz
+	Json::Value inBody;
+	Json::Reader read;
+	read.parse(inString, inBody, true);
+	return inBody;
+}
 
 Q_DECLARE_METATYPE(QVector<int>)
 
@@ -51,6 +60,69 @@ QString readFileToString(QString filePath)
 	QString allRead = file.readAll();
 	file.close();
 	return allRead;
+}
+
+std::string asString(double number)
+{
+    std::ostringstream convert;   // stream used for the conversion
+    convert << number;      // insert the textual representation of 'number' in the characters in the stream
+    return convert.str();
+}
+
+void testBodyConversion(IESoRWorld* world, QWebFrame* frame)
+{
+		//Pulling in some sample data for testing!
+	std::string bodyJSON = world->loadDataFile("jsBody112.json");
+	
+	//now get our genome k thx-- make it a QString for testing here
+	QString genomeJSON = world->loadDataFile("jsGenome112.json").c_str();
+
+	//pull in our JSON body plz
+	Json::Value inBody = parseJSON(bodyJSON);
+
+	//do a quick genome test please
+	QVariant genomeTest = frame->evaluateJavaScript("doGPU(" + genomeJSON + ")");
+
+	//convert our returned string into a json object
+	Json::Value genomeByteNetwork = parseJSON(genomeTest.toString().toStdString());
+	
+
+	//let's make a body-- give it a new network
+	Network* net = new Network(genomeByteNetwork);
+
+	//pass to our genome converter
+	iesorBody* genomeConverter = new iesorBody(net);
+
+	//build the body
+	Json::Value convertedBody = genomeConverter->buildBody(inBody);
+
+	//now we compare!
+	//must check nodes and connections
+
+	Json::Value truthNodes = inBody["nodes"];
+	Json::Value testNodes = convertedBody["nodes"];
+
+	
+	qDebug() << "truth nodes: " << truthNodes.size() << " test nodes: " << testNodes.size() << "\n";
+	
+	/*if(truthNodes.size() == testNodes.size())
+	{
+*/
+		for(int i=0; i < truthNodes.size(); i++)
+		{
+			Json::Value tNode = truthNodes[i];
+			Json::Value testNode = testNodes[i];
+
+			double tX = tNode["x"].asDouble();
+			double tY = tNode["y"].asDouble();
+			std::string truth = asString(tNode["x"].asDouble()) + "," + asString(tNode["y"].asDouble());
+			std::string test = asString(testNode["x"].asDouble()) + "," + asString(testNode["y"].asDouble());
+
+			qDebug() << "truth node: " << truth.c_str() << " test node: " << test.c_str() << "\n";
+		}
+	//}
+
+
 }
 
 QtFabric::QtFabric()
@@ -101,9 +173,14 @@ QtFabric::QtFabric()
 	sampleGenome = world->loadDataFile("jsGenome142856.json").c_str();
 
 
+
+
+
+
+
 	QString r =  readFile(":/QtFabric/html/basic.html");
 	view->setHtml(r);
-	qDebug() << "contents: " << r;
+	//qDebug() << "contents: " << r;
 
 
 	this->drawToFabric(world->worldDrawList());
@@ -251,8 +328,14 @@ std::string nToS(int number)
 
 
 
-void convertJSONGenome(QWebView* view, QMap<QString, QVariant>& json)
+void convertJSONGenome(QWebView* view, QString& jsonString)
 {
+	Json::Value json;
+	Json::Reader readJSON;
+
+	//parse the string into a json object -- wahoooooooo
+	readJSON.parse(jsonString.toStdString(), json);
+	
 	//nodeOrder
 	//nodeArrays
 	//QVector<int>& nOrder = json["nodeOrder"].convert(QVariant::ar;
@@ -261,83 +344,84 @@ void convertJSONGenome(QWebView* view, QMap<QString, QVariant>& json)
 	//inputCount: cppn.inputNeuronCount,
 	//nodeCount: cppn.totalNeuronCount,
 	//connectionCount: cppn.connections.length,
+	
 
-	int biasCount = json["biasCount"].toInt();
-	int inputCount = json["inputCount"].toInt();
-	int outputCount = json["outputCount"].toInt();
+	int biasCount = json["biasCount"].asInt();//.toInt();
+	int inputCount = json["inputCount"].asInt();
+	int outputCount = json["outputCount"].asInt();
 
-	int nodeCount = json["nodeCount"].toInt();
-	int connectionCount = json["connectionCount"].toInt();
+	int nodeCount = json["nodeCount"].asInt();
+	int connectionCount = json["connectionCount"].asInt();
 
-	//have all the info to create weights and registers
-	double* weights = new double[connectionCount]; 
-	double* registers = new double[nodeCount];
+	////have all the info to create weights and registers
+	//double* weights = new double[connectionCount]; 
+	//double* registers = new double[nodeCount];
 
-	int** registerArrays = new int*[nodeCount];
-	int** weightArrays = new int*[nodeCount];
+	//int** registerArrays = new int*[nodeCount];
+	//int** weightArrays = new int*[nodeCount];
 
-	int* nodeIncoming = new int[nodeCount];	
+	//int* nodeIncoming = new int[nodeCount];	
 
-	int* activationTypes = new int[nodeCount];	
+	//int* activationTypes = new int[nodeCount];	
 
-	int* nodeOrder = new int[nodeCount];	
+	//int* nodeOrder = new int[nodeCount];	
 
-	QList<QVariant> nodeOrderJSON = json["nodeOrder"].toList();
-	int nIx = 0;
-	//we loop through all our ordered nodes to create a node execution list
-	for (QList<QVariant>::iterator it = nodeOrderJSON.begin() ; it != nodeOrderJSON.end(); ++it)
-	{
-		printf("In order: %d \n",  it->toInt());
-		nodeOrder[nIx++] = it->toInt();
-	}
+	//QList<QVariant> nodeOrderJSON = json["nodeOrder"].toList();
+	//int nIx = 0;
+	////we loop through all our ordered nodes to create a node execution list
+	//for (QList<QVariant>::iterator it = nodeOrderJSON.begin() ; it != nodeOrderJSON.end(); ++it)
+	//{
+	//	printf("In order: %d \n",  it->toInt());
+	//	nodeOrder[nIx++] = it->toInt();
+	//}
 
-	QList<QVariant> weightsJSON = json["weights"].toList();
-	nIx = 0;
-	//we loop through all our ordered nodes to create a node execution list
-	for (QList<QVariant>::iterator it = weightsJSON.begin() ; it != weightsJSON.end(); ++it)
-	{
-		printf("Weight: %f \n",  it->toDouble());
-		weights[nIx++] = it->toDouble();
-	}
+	//QList<QVariant> weightsJSON = json["weights"].toList();
+	//nIx = 0;
+	////we loop through all our ordered nodes to create a node execution list
+	//for (QList<QVariant>::iterator it = weightsJSON.begin() ; it != weightsJSON.end(); ++it)
+	//{
+	//	printf("Weight: %f \n",  it->toDouble());
+	//	weights[nIx++] = it->toDouble();
+	//}
 
-	//QVector<int> vecOrder = json["nodeOrder"].value<QVector<int>>();
+	////QVector<int> vecOrder = json["nodeOrder"].value<QVector<int>>();
 
-	QMap<QString, QVariant> nodeArrays = json["nodeArrays"].toMap();
+	//QMap<QString, QVariant> nodeArrays = json["nodeArrays"].toMap();
 
-	for(int i=biasCount + inputCount; i < nodeCount; i++)
-	{
-		//need to look inside node arrays
-		QMap<QString, QVariant> nodeInfo = nodeArrays[nToS(i).c_str()].toMap();
+	//for(int i=biasCount + inputCount; i < nodeCount; i++)
+	//{
+	//	//need to look inside node arrays
+	//	QMap<QString, QVariant> nodeInfo = nodeArrays[nToS(i).c_str()].toMap();
 
-		int inCount = nodeInfo["inCount"].toInt();
-		nodeIncoming[i] = inCount;
-		QList<QVariant> registerList = nodeInfo["registerList"].toList();
-		QList<QVariant> weightList = nodeInfo["weightList"].toList();
+	//	int inCount = nodeInfo["inCount"].toInt();
+	//	nodeIncoming[i] = inCount;
+	//	QList<QVariant> registerList = nodeInfo["registerList"].toList();
+	//	QList<QVariant> weightList = nodeInfo["weightList"].toList();
 
-		//this integer array holds the order of registers to draw from
-		registerArrays[i] = new int[inCount];
-		weightArrays[i] = new int[inCount];
+	//	//this integer array holds the order of registers to draw from
+	//	registerArrays[i] = new int[inCount];
+	//	weightArrays[i] = new int[inCount];
 
-		nIx = 0;
-		//we loop through all our registers to query
-		for (QList<QVariant>::iterator it = registerList.begin() ; it != registerList.end(); ++it)
-		{
-			printf("Register sampling: %d \n",  it->toInt());
-			registerArrays[i][nIx++] = it->toInt();
-		}
-		//do the same for the weight indices
-		nIx = 0;
-		for (QList<QVariant>::iterator it = weightList.begin() ; it != weightList.end(); ++it)
-		{
-			printf("Weight index: %d \n",  it->toInt());
-			weightArrays[i][nIx++] = it->toInt();
-		}
+	//	nIx = 0;
+	//	//we loop through all our registers to query
+	//	for (QList<QVariant>::iterator it = registerList.begin() ; it != registerList.end(); ++it)
+	//	{
+	//		printf("Register sampling: %d \n",  it->toInt());
+	//		registerArrays[i][nIx++] = it->toInt();
+	//	}
+	//	//do the same for the weight indices
+	//	nIx = 0;
+	//	for (QList<QVariant>::iterator it = weightList.begin() ; it != weightList.end(); ++it)
+	//	{
+	//		printf("Weight index: %d \n",  it->toInt());
+	//		weightArrays[i][nIx++] = it->toInt();
+	//	}
 
-		//handle activation functions
-		QString activation = nodeInfo["activation"].toString();
-		//activationTypes[i] = activationToInteger(activation);
+	//	//handle activation functions
+	//	QString activation = nodeInfo["activation"].toString();
+	//	//activationTypes[i] = activationToInteger(activation);
 
-	}
+	//}
 
 
 	//we have enough to do activation now, I believe
@@ -351,13 +435,12 @@ void convertJSONGenome(QWebView* view, QMap<QString, QVariant>& json)
 	//int* activationTypes = new int[nodeCount];	
 	//int* nodeOrder = new int[nodeCount];	
 
-
 	int totalInputs = inputCount + biasCount;
 
 	//set bias = 1 
-	for(int i=0; i < biasCount; i++)
-		registers[i] = 1.0;
-
+	//for(int i=0; i < biasCount; i++)
+		//registers[i] = 1.0;
+	Network* network = new Network(json);
 	QMap<QString, QVariant> inOut = view->page()->mainFrame()->evaluateJavaScript("randomEvaluation(" + sampleGenome + ")").toMap();
 
 	QList<QVariant> inputs = inOut["inputs"].toList();
@@ -369,6 +452,14 @@ void convertJSONGenome(QWebView* view, QMap<QString, QVariant>& json)
 	//outputs pulled from the list
 	QList<QVariant> outputs = inOut["outputs"].toList();	
 	
+	double* dInputs = new double[inputCount];
+	for(int i=0; i < inputCount; i++)
+	{
+		dInputs[i] = inputs[i].toDouble();
+	}
+	double* results = network->activate(dInputs);
+	double* registers = network->GetRegisters();
+
 	for(int i=0; i < nodeCount; i++)
 	{
 		printf("%d: \n", i);
@@ -410,7 +501,8 @@ void QtFabric::finishLoading(bool)
 	QVariant genomeTest = view->page()->mainFrame()->evaluateJavaScript("doGPU(" + sampleGenome + ")");
 
 	//testing conversion to genome
-	convertJSONGenome(view, genomeTest.toMap());
+	//convertJSONGenome(view, genomeTest.toString());
+	testBodyConversion(world, view->page()->mainFrame());
 
 	loadedView = true;
 

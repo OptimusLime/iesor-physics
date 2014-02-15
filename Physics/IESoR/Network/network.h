@@ -16,6 +16,7 @@ class Network
 
 		int InputCount(){return inputCount;}
 		int OutputCount(){ return outputCount;}
+		double* GetRegisters() { return registers;}
 
 	private:
 

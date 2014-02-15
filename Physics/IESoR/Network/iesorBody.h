@@ -9,11 +9,11 @@ class Point;
 class iesorBody 
 {
 	public:
-		iesorBody(std::string network);
+		iesorBody(Network* sNetwork);
 
 		//build body using network
 		//keep as separate call so it can be made on another thread
-		Json::Value buildBody();
+		Json::Value buildBody(Json::Value compareBody);
 
 	private:
 

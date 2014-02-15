@@ -142,7 +142,7 @@ Network::Network(Json::Value jsonNetwork)
 		for (int nIx =0; nIx < weightList.size(); nIx++)
 		{
 			printf("Weight index: %d \n",  weightList[nIx].asInt());
-			weightArrays[i][nIx++] = weightList[nIx].asInt();
+			weightArrays[i][nIx] = weightList[nIx].asInt();
 		}
 
 		//handle activation functions
@@ -190,7 +190,9 @@ double* Network::activate(double* inputs)
 
 		for(int r=0; r < nCount; r++)
 		{
-			nodeSum += registers[regIxArray[r]]*weights[weightIxArray[r]];
+			int regIx = regIxArray[r];
+			int wIx = weightIxArray[r];
+			nodeSum += registers[regIx]*weights[wIx];
 		}
 
 		switch(aType)
@@ -213,7 +215,7 @@ double* Network::activate(double* inputs)
 				break;
 		}
 
-		printf("tgtIx %d - calc: %f \n", tgtNeuronIx, registers[tgtNeuronIx]);
+		//printf("tgtIx %d - calc: %f \n", tgtNeuronIx, registers[tgtNeuronIx]);
 
 		//register done, move on!
 	}
@@ -222,7 +224,7 @@ double* Network::activate(double* inputs)
 	double* fullOutputs = new double[outputCount];
 
 	//copy to double array
-	memcpy (fullOutputs,  &registers[totalInputs], outputCount);
+	memcpy (fullOutputs,  &registers[totalInputs], sizeof(double)*outputCount);
 
 	//send back registers starting at outputs!
 	return fullOutputs;

@@ -18,7 +18,7 @@
             var gpu = require('iesorGPU');
             console.log(gpu);
 
-            return gpu.NeatGenomeToByteCode(ngJSON);
+            return JSON.stringify(gpu.NeatGenomeToByteCode(ngJSON));
         }
 
         var lastCPPN;

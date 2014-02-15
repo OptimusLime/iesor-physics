@@ -63,17 +63,10 @@ double minYDistanceGround(Point p1, Point p2)
 //new body, simple!
 //just parse json from string
 
-iesorBody::iesorBody(std::string sNetwork)
+iesorBody::iesorBody(Network* sNetwork)
 {
-	Json::Value networkJSON;
-	Json::Reader readJSON;
-
-	//parse the string into a json object -- wahoooooooo
-	readJSON.parse(sNetwork, networkJSON);
-
-	//build our network from the json
-	network = new Network(networkJSON);
-
+	//build our body from the network at future time
+	network = sNetwork;
 }
 double* iesorBody::queryCPPNOutputs(double x1, double y1, double x2, double y2, double maxXDist, double minYDist)
 {
@@ -106,10 +99,9 @@ Point* iesorBody::gridQueryPoints(int resolution)
     {
         for (int y = 0; y < resolution; y++)
         {
-			Point p = queryPoints[ix++];
-			p.x= fX;
-			p.y = fY;
-
+			queryPoints[ix].x = fX;
+			queryPoints[ix].y = fY;
+			ix++;
             //now increment fy and go again
             fY += dy;
         }
@@ -195,7 +187,7 @@ string jsonPointToString(Json::Value point)
 }
 string jsonConnToString(Json::Value conn)
 {
-	return conn["sourceID"].asString() + "," + conn["targetID"].asString(); 
+	return iToS(conn["sourceID"].asInt()) + "," + iToS(conn["targetID"].asInt()); 
 }
  Json::Value firstConnectionNotInvestigated(Json::Value& connections, Json::Value& allConnectionsSeen)
 {
@@ -204,8 +196,10 @@ string jsonConnToString(Json::Value conn)
     {
 		Json::Value conn = connections[c];
 		string s =jsonConnToString(conn);
-		if(!allConnectionsSeen[s].isNull())
-			return connections[c];
+		Json::Value seen = allConnectionsSeen[s];
+		//if we haven't seen this object, it's our first to investigate!
+		if(seen.isNull())
+			return conn;
     }
 
 	Json::Value n(Json::nullValue);
@@ -237,11 +231,11 @@ string jsonConnToString(Json::Value conn)
 	Json::Value connectionChains(Json::arrayValue);
     //List<ConnectionGeneList> connectionChains = new List<ConnectionGeneList>();
 
-	Json::Value seenConnections;
+	Json::Value seenConnections(Json::objectValue);
     //List<ConnectionGene> seenConnections = new List<ConnectionGene>();
     //List<long> seenNodes = new List<long>();
 	//vector<int> seenNodes;
-	Json::Value seenNodes;
+	Json::Value seenNodes(Json::objectValue);
 
     while (seenConnections.size() < connections.size())
     {
@@ -259,7 +253,7 @@ string jsonConnToString(Json::Value conn)
 		Json::Value conChain(Json::arrayValue);
 
         //get ready to investigate the node of a connection we haven't seen
-		investigateNodes.append(firstInvestigate["sourceID"].asInt());
+		investigateNodes.append(firstInvestigate["sourceID"]);
 
         //still have nodes left to investigate, we should continue
         while (investigateNodes.size() > 0)
@@ -274,7 +268,7 @@ string jsonConnToString(Json::Value conn)
             {
                 //grab the node id (this is the starting node, and we want to see all outward connections for that node)
                 //i.e. who does this node connect to!
-				int sourceNode = investigateNodes[i].asInt();
+				long sourceNode = investigateNodes[i].asInt();
 
                 //don't examine nodes you've already seen -- but we shouodln't get here anyways
 				if (!seenNodes[iToS(sourceNode)].isNull())// sourceNode.Contains(sourceNode))
@@ -308,7 +302,8 @@ string jsonConnToString(Json::Value conn)
                     //we need to investigate another node -- no duplicates please!
 					if (seenNodes[iToS(targetID)].isNull() && investigateMap.find(targetID) == investigateMap.end())
                     {
-						nextInvestigate.append(targetID);
+						//investigate the json object -- not the int!
+						nextInvestigate.append(cg["targetID"]);
 						investigateMap[targetID] = 1;
 					}
                 }
@@ -340,7 +335,8 @@ string jsonConnToString(Json::Value conn)
                     //going for inward goofers
 					if (seenNodes[iToS(sourceID)].isNull() && investigateMap.find(sourceID) == investigateMap.end())
                     {
-						nextInvestigate.append(sourceID);
+						//investigate the json object -- not the int!
+						nextInvestigate.append(cg["sourceID"]);
 						investigateMap[sourceID] = 1;
 					}
                 }
@@ -443,7 +439,7 @@ string jsonConnToString(Json::Value conn)
 
 
 
-Json::Value iesorBody::buildBody()
+Json::Value iesorBody::buildBody(Json::Value compareBody)
 {
 	Network* net = network;
 	bool isEmpty = false;
@@ -475,6 +471,9 @@ Json::Value iesorBody::buildBody()
 	map<int, Point> conSourcePoints;
     map<int, Point> conTargetPoints;
 
+	Json::Value allOutputs = compareBody["allBodyOutputs"];
+	Json::Value allInputs = compareBody["allBodyInputs"];
+	int oCount = 0;
 
     //Dictionary<string, List<PointF>> pointsChecked = new Dictionary<string, List<PointF>>();
     //List<PointF> pList;
@@ -489,10 +488,33 @@ Json::Value iesorBody::buildBody()
         {
             Point otherPoint = queryPoints[p2];
 
-            if (p1 != p2 && (abs(xyPoint.x - otherPoint.y) < xDistanceThree && abs(xyPoint.x - otherPoint.y) < yDistanceThree))
+            if (p1 != p2 && (abs(xyPoint.x - otherPoint.x) < xDistanceThree && abs(xyPoint.y - otherPoint.y) < yDistanceThree))
             {
                 double* outs = queryCPPNOutputs(xyPoint.x, xyPoint.y, otherPoint.x, otherPoint.y, maxXDistanceCenter(xyPoint, otherPoint),  minYDistanceGround(xyPoint, otherPoint));
                 double weight = outs[0];
+
+				Json::Value compareOutputs = allOutputs[oCount];
+				Json::Value compareInputs = allInputs[oCount];
+
+				Json::Value key = compareInputs["Key"];
+				Json::Value value = compareInputs["Value"];
+
+				if(abs(key["X"].asDouble() - xyPoint.x) > 0.0)
+					printf("in original kx || new inputs: %f   ||   %f \n", key["X"].asDouble(), xyPoint.x);
+				if(abs(key["Y"].asDouble() - xyPoint.y) > 0.0)
+					printf("in original ky || new inputs: %f   ||   %f \n", key["Y"].asDouble(), xyPoint.y);
+
+				if(abs(value["X"].asDouble() - otherPoint.x) > 0.0)
+					printf("in original vx || new inputs: %f   ||   %f \n", value["X"].asDouble(), otherPoint.x);
+				if(abs(value["Y"].asDouble() - otherPoint.y) > 0.0)
+					printf("in original vy || new inputs: %f   ||   %f \n", value["Y"].asDouble(), otherPoint.y);
+				
+
+				for(int o=0; o < compareOutputs.size(); o++)
+				{
+					if(abs(compareOutputs[o].asDouble()- outs[o]) > 0.000001 )
+						printf("out original || new outputs || dif : %f   ||   %f   ||   %f \n", compareOutputs[o].asDouble(), outs[o], (abs(compareOutputs[o].asDouble()- outs[o])));
+				}
 
                 if (useLeo )
                 {
@@ -605,6 +627,7 @@ Json::Value iesorBody::buildBody()
 
 					}
                 }
+				oCount++;
             }
         }
 
@@ -612,6 +635,12 @@ Json::Value iesorBody::buildBody()
 
     int beforeConn = connections.size();
     int beforeNeuron = hiddenNeurons.size();
+
+	printf("Before %d\n", beforeConn);
+	printf("tested against %d\n", compareBody["connections"].size());
+
+	
+
 
 
     map<int, Json::Value> connectionsGoingOut = outwardNodeConnections(connections);

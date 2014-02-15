@@ -9,11 +9,15 @@
 #include <math.h>
 
 #include <JSON/src/writer.h>
-
+#include "IESoR\Network\iesorBody.h"
 
 //including our json info for easy access
 using namespace Json;
 using namespace std;
+
+//HELPER FUNCTIONS
+//TODO: 
+//To be moved into a singleton later
 
 // number to be converted to a string
 string toString(int number)
@@ -22,6 +26,19 @@ string toString(int number)
     convert << number;      // insert the textual representation of 'number' in the characters in the stream
     return convert.str();
 }
+
+//Json::Value parseJSON(std::string inString)
+//{
+//		//pull in our JSON body plz
+//	Json::Value inBody;
+//	Json::Reader read;
+//	read.parse(inString, inBody, true);
+//	return inBody;
+//}
+
+
+
+
 
 
 struct PhysicsID
@@ -227,17 +244,9 @@ IESoRWorld::IESoRWorld()
 	// Add the ground fixture to the ground body.
 	this->addShapeToBody(groundBody, &groundBox, 0.0f);
 	//groundBody->CreateFixture(&groundBox, 0.0f);
-	
-	//Pulling in some sample data for testing!
-	std::string bodyJSON = loadDataFile("sampleBody224632.json");
-
-	//pull in our JSON body plz
-	Json::Value inBody;
-	Json::Reader read;
-	read.parse(bodyJSON, inBody, true);
 
 	b2Vec2 canvas(200, 150);
-	this->loadBodyIntoWorld(inBody, canvas);
+	//this->loadBodyIntoWorld(inBody, canvas);
 
 
 	// Define the dynamic body. We set its position and call the body factory.
