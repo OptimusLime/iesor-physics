@@ -10,6 +10,8 @@ set(JSON_HDRS
 	src/value.h
 	src/writer.h
 	
+	src/json_tool.h
+	
 	src/json_internalarray.inl
 	src/json_internalmap.inl
 	src/json_valueiterator.inl	

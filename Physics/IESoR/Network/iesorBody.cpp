@@ -33,7 +33,7 @@ public:
 	double x;
 	double y;
 };
-string iToS(int number)
+string iToS(long number)
 {
     ostringstream convert;   // stream used for the conversion
     convert << number;      // insert the textual representation of 'number' in the characters in the stream
@@ -114,17 +114,17 @@ Point* iesorBody::gridQueryPoints(int resolution)
     return queryPoints;
 }
 
-map<int, Json::Value> inwardNodeConnections(Json::Value& cgl)
+map<long, Json::Value> inwardNodeConnections(Json::Value& cgl)
 {
-    map<int, Json::Value> nodesInward;
+    map<long, Json::Value> nodesInward;
 
     for (int i = 0; i < cgl.size(); i++)
     {
         //grab the connection
         Json::Value cg = cgl[i];
 		//get our source and target
-		int sourceID = cg["sourceID"].asInt();
-		int targetID = cg["targetID"].asInt();
+		long sourceID = cg["sourceID"].asInt64();
+		long targetID = cg["targetID"].asInt64();
 
         //we actually need to make sure any node that receives a connection must have a connection gene list -- even if it contains nothing
         //i.e. if I go to check how many outgoing connections to a node that only has incoming connections -- if we don't do this step
@@ -148,17 +148,17 @@ map<int, Json::Value> inwardNodeConnections(Json::Value& cgl)
     return nodesInward;
 }
 
-map<int, Json::Value> outwardNodeConnections(Json::Value& cgl)
+map<long, Json::Value> outwardNodeConnections(Json::Value& cgl)
 {
-    map<int, Json::Value> nodesToOut;
+    map<long, Json::Value> nodesToOut;
 
     for (int i = 0; i < cgl.size(); i++)
     {
         //grab the connection
         Json::Value cg = cgl[i];
 		//get our source and target
-		int sourceID = cg["sourceID"].asInt();
-		int targetID = cg["targetID"].asInt();
+		long sourceID = cg["sourceID"].asInt64();
+		long targetID = cg["targetID"].asInt64();
 
         //we actually need to make sure any node that receives a connection must have a connection gene list -- even if it contains nothing
         //i.e. if I go to check how many outgoing connections to a node that only has incoming connections -- if we don't do this step
@@ -187,7 +187,7 @@ string jsonPointToString(Json::Value point)
 }
 string jsonConnToString(Json::Value conn)
 {
-	return iToS(conn["sourceID"].asInt()) + "," + iToS(conn["targetID"].asInt()); 
+	return iToS(conn["sourceID"].asInt64()) + "," + iToS(conn["targetID"].asInt64()); 
 }
  Json::Value firstConnectionNotInvestigated(Json::Value& connections, Json::Value& allConnectionsSeen)
 {
@@ -218,9 +218,9 @@ string jsonConnToString(Json::Value conn)
 	 return -1;
  }
 
- void ensureSingleConnectedStructure(Json::Value connections,
-            map<int, Json::Value> inwardConnection, map<int, Json::Value> outwardConnections, 
-            Json::Value hiddenNeurons, map<int, Point> conSourcePoints, map<int, Point> conTargetPoints)
+ void ensureSingleConnectedStructure(Json::Value& connections,
+            map<long, Json::Value>& inwardConnection, map<long, Json::Value>& outwardConnections, 
+            Json::Value& hiddenNeurons, map<long, Point>& conSourcePoints, map<long, Point>& conTargetPoints)
 {
     int maxChain = 0;
 
@@ -261,14 +261,14 @@ string jsonConnToString(Json::Value conn)
 
             //this will be the next nodes we take a look at
 			Json::Value nextInvestigate(Json::arrayValue);
-			map<int, int> investigateMap;
+			map<long, long> investigateMap;
 
             //for all the nodes we need to look at
             for (int i = 0; i < investigateNodes.size(); i++)
             {
                 //grab the node id (this is the starting node, and we want to see all outward connections for that node)
                 //i.e. who does this node connect to!
-				long sourceNode = investigateNodes[i].asInt();
+				long sourceNode = investigateNodes[i].asInt64();
 
                 //don't examine nodes you've already seen -- but we shouodln't get here anyways
 				if (!seenNodes[iToS(sourceNode)].isNull())// sourceNode.Contains(sourceNode))
@@ -287,8 +287,8 @@ string jsonConnToString(Json::Value conn)
                     //grab our connection gene
                     Json::Value cg = cgOut[c];
 
-					int sourceID = cg["sourceID"].asInt();
-					int targetID = cg["targetID"].asInt();
+					long sourceID = cg["sourceID"].asInt64();
+					long targetID = cg["targetID"].asInt64();
                     //add it to our chain, since it's connected!
                     //recursive chain connections are actually not allowed
 					if (sourceID != targetID)
@@ -318,8 +318,8 @@ string jsonConnToString(Json::Value conn)
                     //grab our connection gene
                     Json::Value cg = cgOut[c];
 
-					int sourceID = cg["sourceID"].asInt();
-					int targetID = cg["targetID"].asInt();
+					long sourceID = cg["sourceID"].asInt64();
+					long targetID = cg["targetID"].asInt64();
 
                     //add it to our chain, since it's connected!
                     //recursive chain connections are actually not allowed
@@ -390,11 +390,12 @@ string jsonConnToString(Json::Value conn)
 	for(int i=0; i < connections.size(); i++)
 	{
 		Json::Value con = connections[i];
-		int cID = con["gid"].asInt();
+		long cID = con["gid"].asInt64();
         //no duplicates please!
 		Point potential = conSourcePoints[cID];
 		string s = potential.toString();
-		if(hiddenAlready.find(s) != hiddenAlready.end())
+		//if we can't find you, we haven't seen you!
+		if(hiddenAlready.find(s) == hiddenAlready.end())
 		{
 			hiddenAlready[s] = 1;
 			hiddenNeurons.append(potential.toJSON());
@@ -403,7 +404,7 @@ string jsonConnToString(Json::Value conn)
         potential = conTargetPoints[cID];
 		s = potential.toString();
 		
-		if(hiddenAlready.find(s) != hiddenAlready.end())
+		if(hiddenAlready.find(s) == hiddenAlready.end())
 		{
 			hiddenAlready[s] = 1;
 			hiddenNeurons.append(potential.toJSON());
@@ -414,21 +415,21 @@ string jsonConnToString(Json::Value conn)
 	for(int i=0; i < connections.size(); i++)
 	{
 		Json::Value con = connections[i];
-		int cID = con["gid"].asInt();
+		long cID = con["gid"].asInt64();
 
 		 //readjust connection source/target depending on hiddenNeuron array
        	Point point = conSourcePoints[cID];
 		con["sourceID"] = findIndex(point, hiddenNeurons);
 
-		if (con["sourceID"].asInt() == -1)
-			printf("Adjusted con src- %d, tgt- %d", con["sourceID"].asInt(), con["targetID"].asInt());
+		if (con["sourceID"].asInt64() == -1)
+			printf("Adjusted con src- %d, tgt- %d \n", con["sourceID"].asInt(), con["targetID"].asInt());
 
 		//now for the target connection
         point = conTargetPoints[cID];
 		con["targetID"] = findIndex(point, hiddenNeurons);
 
-       if (con["targetID"].asInt() == -1)
-			printf("Adjusted con src- %d, tgt- %d", con["sourceID"].asInt(), con["targetID"].asInt());
+		if (con["targetID"].asInt64() == -1)
+			printf("Adjusted con src- %d, tgt- %d \n", con["sourceID"].asInt(), con["targetID"].asInt());
 
 	}
 
@@ -468,8 +469,8 @@ Json::Value iesorBody::buildBody(Json::Value compareBody)
 	Json::Value hiddenMap;
 
 
-	map<int, Point> conSourcePoints;
-    map<int, Point> conTargetPoints;
+	map<long, Point> conSourcePoints;
+    map<long, Point> conTargetPoints;
 
 	Json::Value allOutputs = compareBody["allBodyOutputs"];
 	Json::Value allInputs = compareBody["allBodyInputs"];
@@ -640,11 +641,8 @@ Json::Value iesorBody::buildBody(Json::Value compareBody)
 	printf("tested against %d\n", compareBody["connections"].size());
 
 	
-
-
-
-    map<int, Json::Value> connectionsGoingOut = outwardNodeConnections(connections);
-    map<int, Json::Value> connectionsGoingInward = inwardNodeConnections(connections);
+    map<long, Json::Value> connectionsGoingOut = outwardNodeConnections(connections);
+    map<long, Json::Value> connectionsGoingInward = inwardNodeConnections(connections);
 
     ensureSingleConnectedStructure(connections, connectionsGoingInward,  connectionsGoingOut, hiddenNeurons, conSourcePoints, conTargetPoints);
 
