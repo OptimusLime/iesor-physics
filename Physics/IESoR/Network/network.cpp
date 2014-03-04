@@ -57,15 +57,15 @@ std::string numAsString(int number)
 int Network::activationToInteger(std::string activationType)
 {
 	if(activationType == "BipolarSigmoid")
-		return ActivationInt::BipolarSigmoid;
+		return BipolarSigmoid;
 	else if(activationType == "Gaussian")
-		return ActivationInt::Gaussian;
+		return Gaussian;
 	else if(activationType == "StepFunction")
-		return ActivationInt::StepFunction;
+		return StepFunction;
 	else if(activationType == "Sine")
-		return ActivationInt::Sine;
+		return Sine;
 	else if(activationType == "input")
-		return ActivationInt::Linear;
+		return Linear;
 	else
 	{
 		printf("No known activation type!");
@@ -197,20 +197,20 @@ double* Network::activate(double* inputs)
 
 		switch(aType)
 		{
-			case ActivationInt::BipolarSigmoid:
+			case BipolarSigmoid:
 				registers[tgtNeuronIx] = bipolarSigmoid(nodeSum);
 				break;
 
-			case ActivationInt::Gaussian:
+			case Gaussian:
 				registers[tgtNeuronIx] = gaussian(nodeSum);
 				break;
-			case ActivationInt::Linear:
+			case Linear:
 				registers[tgtNeuronIx] = linear(nodeSum);
 				break;
-			case ActivationInt::Sine:
+			case Sine:
 				registers[tgtNeuronIx] = sine(nodeSum);
 				break;
-			case ActivationInt::StepFunction:
+			case StepFunction:
 				registers[tgtNeuronIx] = stepFunction(nodeSum);
 				break;
 		}

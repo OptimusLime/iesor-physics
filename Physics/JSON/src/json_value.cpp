@@ -4,10 +4,10 @@
 // See file LICENSE for detail or copy at http://jsoncpp.sourceforge.net/LICENSE
 
 #if !defined(JSON_IS_AMALGAMATION)
-# include <JSON\src\value.h>
-# include <JSON\src\writer.h>
+# include <JSON/src/value.h>
+# include <JSON/src/writer.h>
 # ifndef JSON_USE_SIMPLE_INTERNAL_ALLOCATOR
-#  include "JSON\src\json_batchallocator.h"
+#  include "JSON/src/json_batchallocator.h"
 # endif // #ifndef JSON_USE_SIMPLE_INTERNAL_ALLOCATOR
 #endif // if !defined(JSON_IS_AMALGAMATION)
 #include <iostream>

@@ -2,13 +2,14 @@
 
 #include <map>
 #include <sstream>
+#include <cmath>
 
 using namespace std;
 
 static double HyperNEATWeightRange = 3.0;
 static double HyperNEATThreshold = .2;
 
-struct Point
+class Point
 {
 public:
 	Point(){x=0;y=0;};

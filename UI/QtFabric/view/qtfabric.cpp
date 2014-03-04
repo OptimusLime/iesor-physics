@@ -463,8 +463,8 @@ void convertJSONGenome(QWebView* view, QString& jsonString)
 	for(int i=0; i < nodeCount; i++)
 	{
 		printf("%d: \n", i);
-		printf("start signals: %f \n", startSignals[i]);
-		printf("real signals: %f \n", neuronSignals[i]);
+		printf("start signals: %f \n", startSignals[i].toDouble());
+		printf("real signals: %f \n", neuronSignals[i].toDouble());
 		printf("registers: %f \n", registers[i]);
 		QString act = activationFunctions[i].toString();
 		

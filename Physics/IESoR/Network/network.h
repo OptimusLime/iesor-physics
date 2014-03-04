@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <JSON/json.h>
+#include "math.h"
 
 class Network 
 {

@@ -31,7 +31,7 @@ public:
 	static Json::Value CircleEntity(std::string bodyID, float x, float y, float radius, float angle)
 	{
 		Json::Value e;
-		e["type"] = EntityType::Circle;
+		e["type"] = Circle;
 		e["bodyID"] = bodyID;
 		e["x"] = x;
 		e["y"] = y;
@@ -43,7 +43,7 @@ public:
 	{
 		Json::Value e;
 
-		e["type"] = EntityType::Polygon;
+		e["type"] = Polygon;
 		e["bodyID"] = bodyID;
 		e["x"] = xScale;
 		e["y"] = yScale;
@@ -68,7 +68,7 @@ public:
 	{             
 		Json::Value e;
 
-		e["type"] = EntityType::Rectangle;
+		e["type"] = Rectangle;
 		e["bodyID"] = bodyID;
 		e["x"] = xScale;
 		e["y"] = yScale;

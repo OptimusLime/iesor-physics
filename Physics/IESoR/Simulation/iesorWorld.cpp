@@ -1,5 +1,16 @@
 #define _USE_MATH_DEFINES
 
+//different build location for different machines
+#ifdef __APPLE__
+//define something for Windows
+#define HOME_DIR "../../../../../"
+#elif __WINDOWS__
+#define HOME_DIR "../../../../"
+#else
+#define HOME_DIR "../../../../"
+#endif
+
+
 #include "iesorWorld.h"
 
 #include <string>
@@ -9,7 +20,7 @@
 #include <math.h>
 
 #include <JSON/src/writer.h>
-#include "IESoR\Network\iesorBody.h"
+#include "IESoR/Network/iesorBody.h"
 
 //including our json info for easy access
 using namespace Json;
@@ -26,6 +37,26 @@ string toString(int number)
     convert << number;      // insert the textual representation of 'number' in the characters in the stream
     return convert.str();
 }
+
+#define SIZE 1024
+
+//todo: Put this in a global singleton for calling! Duh....
+string getCurrentDirectory()
+{
+    char buffer[SIZE];
+    char *answer = getcwd(buffer, sizeof(buffer));
+    string s_cwd;
+    if (answer)
+    {
+        s_cwd = answer;
+        return s_cwd;
+    }
+    else
+        return NULL;
+}
+
+
+
 
 //Json::Value parseJSON(std::string inString)
 //{
@@ -196,7 +227,12 @@ b2Fixture* IESoRWorld::addShapeToBody(b2Body* body, b2FixtureDef* fixDef)
 //laod object from data folder -- simple!!
 std::string IESoRWorld::loadDataFile(std::string dataName)
 {
-	std::string filePath = "../../../../Physics/Data/" + dataName;
+	//std::string filePath = "../../../../Physics/Data/" + dataName;
+	std::string filePath = HOME_DIR;
+    filePath += "Physics/Data/" + dataName;
+    
+    //printf("Current directory: %s", getCurrentDirectory().c_str());
+    
 	return get_file_contents(filePath.c_str());
 }
 
@@ -646,11 +682,11 @@ void IESoRWorld::setBody(Json::Value& entity)
 	//we are either adding "ground" (static) or we're adding everything else (dynamic)
 	if (entity["bodyID"].asString() == "ground")
     {
-		bodyDef->type = b2BodyType::b2_staticBody;
+		bodyDef->type = b2_staticBody;
     }
     else
     {
-		bodyDef->type = b2BodyType::b2_dynamicBody;
+		bodyDef->type = b2_dynamicBody;
     }
 
 	//we set the position to the intial x,y coordinate
