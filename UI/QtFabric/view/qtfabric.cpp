@@ -7,6 +7,7 @@
 #include <QtCore/QVector>
 #include <string>
 #include <sstream>
+#include "QtFabric/bridge/QtWINSocket.h"
 
 static QString fabric;
 static QString neatjs;
@@ -130,8 +131,8 @@ QtFabric::QtFabric()
 	//ui.setupUi(this);
 	loadedView = false;
 	this->resize(1024, 768);
-
-	//enable webview inspector
+    
+   	//enable webview inspector
 	QWebSettings::globalSettings()->setAttribute(QWebSettings::DeveloperExtrasEnabled, true);
 
 	//add in webgl support
@@ -184,6 +185,13 @@ QtFabric::QtFabric()
 
 
 	this->drawToFabric(world->worldDrawList());
+
+    
+    int port = 8001;
+    
+    QtWINSocket* winClient = new QtWINSocket(this);
+    winClient->connectToServer(port);
+    
 
 
 	//view->show();

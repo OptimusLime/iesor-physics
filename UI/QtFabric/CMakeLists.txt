@@ -41,7 +41,8 @@ endfunction(qt4_wrap_srcs)
 #QtFabric uses Qt to wrap the fabricjs library cross platform
 
 #require Qt4 for this project, need webkit too!
-find_package(Qt4 COMPONENTS QtCore QtGui QtWebKit QtScript REQUIRED)
+find_package(Qt4 COMPONENTS QtCore QtGui QtWebKit QtScript QtNetwork REQUIRED)
+SET(QT_USE_QTNETWORK TRUE)
 SET(QT_USE_QTWEBKIT TRUE)
 SET(QT_USE_QTSCRIPT TRUE)
 
@@ -50,13 +51,15 @@ set(FABRIC_MAIN main.cpp)
 
 #Simple source for now
 set(FABRIC_SRCS 
-	bridge/JSBridge.cpp
+  bridge/JSBridge.cpp
+	bridge/QtWINSocket.cpp
 	view/qtFabric.cpp
 	json/SimpleJson.cpp
 )
 
 set(FABRIC_HDRS
-	bridge/JSBridge.h
+  bridge/JSBridge.h
+	bridge/QtWINSocket.h
 	view/qtFabric.h
 	json/SimpleJson.h
 )
