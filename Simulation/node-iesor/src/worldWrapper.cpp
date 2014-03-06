@@ -1,6 +1,8 @@
 #define BUILDING_NODE_EXTENSION
 #include <node.h>
 #include "worldWrapper.h"
+#include <IESoR/Network/iesorBody.h>
+#include <json.h>
 
 using namespace v8;
 
@@ -21,8 +23,8 @@ void IESoRWrap::Init(Handle<Object> exports) {
   tpl->InstanceTemplate()->SetInternalFieldCount(1);
   
   // Prototype
-  tpl->PrototypeTemplate()->Set(String::NewSymbol("loadBody"),
-      FunctionTemplate::New(LoadBody)->GetFunction());
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("loadBodyFromNetwork"),
+      FunctionTemplate::New(LoadBodyFromNetwork)->GetFunction());
 
   constructor = Persistent<Function>::New(tpl->GetFunction());
   exports->Set(String::NewSymbol("iesorWorld"), constructor);
@@ -44,15 +46,28 @@ Handle<Value> IESoRWrap::New(const Arguments& args) {
   }
 }
 
-Handle<Value> IESoRWrap::LoadBody(const Arguments& args) {
+//TODO: Make this asynchronous
+Handle<Value> IESoRWrap::LoadBodyFromNetwork(const Arguments& args) {
   HandleScope scope;
 
   IESoRWrap* obj = ObjectWrap::Unwrap<IESoRWrap>(args.This());
   
-  std::string param1(*v8::String::Utf8Value(args[0]->ToString()));
-  param1 += "--yes sir";
+  std::string byteNetwork(*v8::String::Utf8Value(args[0]->ToString()));
+  //build class capable of generating a network
+  iesorBody* bodyCreator = new iesorBody(byteNetwork);
 
-  return scope.Close(String::New(param1.c_str()));
+  //in the async version, this is the call we would be doing in a worker thread
+  Json::Value fullBody = bodyCreator->buildBody();
+
+  //This is a temporary piece -- in reality, we should return a local v8 object to JS
+  Json::FastWriter writer;
+  //For now, we simply write the body to a json string
+  std::string outputConfig = writer.write(fullBody);
+
+  //... in the future, we'll then use the body information to insert into our world
+  
+  //until then, just send back the body information
+  return scope.Close(String::New(outputConfig.c_str()));
 }
 
 

@@ -1,6 +1,15 @@
 #include "network.h"
 #include <sstream>
 
+Json::Value parseJSON(std::string inString)
+{
+		//pull in our JSON body plz
+	Json::Value inBody;
+	Json::Reader read;
+	read.parse(inString, inBody, true);
+	return inBody;
+}
+
 enum ActivationInt
 {
 	BipolarSigmoid = 0,
@@ -73,8 +82,20 @@ int Network::activationToInteger(std::string activationType)
 	}
 }
 
+//can pass network a string, and the string will be parsed to json and the other consrtuctor called
+Network::Network(std::string sJSONNetwork) 
+{
+	//initialize using a parsed string in JSON object form
+	init(parseJSON(sJSONNetwork));
+}
+
 
 Network::Network(Json::Value jsonNetwork)
+{
+	init(jsonNetwork);
+}
+
+void Network::init(Json::Value jsonNetwork)
 {
 	biasCount = jsonNetwork["biasCount"].asInt();
 	inputCount = jsonNetwork["inputCount"].asInt();

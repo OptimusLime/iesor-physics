@@ -22,7 +22,7 @@ class IESoRWrap : node::ObjectWrap {
   IESoRWorld* world_;
 
   static Handle<Value> New(const Arguments& args);
-  static Handle<Value> LoadBody(const Arguments& args);
+  static Handle<Value> LoadBodyFromNetwork(const Arguments& args);
 };
 
 #endif

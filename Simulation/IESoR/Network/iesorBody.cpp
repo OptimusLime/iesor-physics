@@ -63,12 +63,27 @@ double minYDistanceGround(Point p1, Point p2)
 
 //new body, simple!
 //just parse json from string
+iesorBody::iesorBody(std::string sByteNetwork)
+{
+	//pass in a string will create the network
+	Network* net = new Network(sByteNetwork);
+
+	//initalize our clasee with the network
+	init(net);
+}
 
 iesorBody::iesorBody(Network* sNetwork)
+{
+	init(sNetwork);
+}
+
+void iesorBody::init(Network* sNetwork)
 {
 	//build our body from the network at future time
 	network = sNetwork;
 }
+
+
 double* iesorBody::queryCPPNOutputs(double x1, double y1, double x2, double y2, double maxXDist, double minYDist)
 {
 	double* coordinates = new double[network->InputCount()];
@@ -439,9 +454,7 @@ string jsonConnToString(Json::Value conn)
 	//Connections should all be setup
 }
 
-
-
-Json::Value iesorBody::buildBody(Json::Value compareBody)
+Json::Value iesorBody::buildBody()//Json::Value compareBody)
 {
 	Network* net = network;
 	bool isEmpty = false;
@@ -473,8 +486,8 @@ Json::Value iesorBody::buildBody(Json::Value compareBody)
 	map<long, Point> conSourcePoints;
     map<long, Point> conTargetPoints;
 
-	Json::Value allOutputs = compareBody["allBodyOutputs"];
-	Json::Value allInputs = compareBody["allBodyInputs"];
+	// Json::Value allOutputs = compareBody["allBodyOutputs"];
+	// Json::Value allInputs = compareBody["allBodyInputs"];
 	int oCount = 0;
 
     //Dictionary<string, List<PointF>> pointsChecked = new Dictionary<string, List<PointF>>();
@@ -495,28 +508,28 @@ Json::Value iesorBody::buildBody(Json::Value compareBody)
                 double* outs = queryCPPNOutputs(xyPoint.x, xyPoint.y, otherPoint.x, otherPoint.y, maxXDistanceCenter(xyPoint, otherPoint),  minYDistanceGround(xyPoint, otherPoint));
                 double weight = outs[0];
 
-				Json::Value compareOutputs = allOutputs[oCount];
-				Json::Value compareInputs = allInputs[oCount];
+				// Json::Value compareOutputs = allOutputs[oCount];
+				// Json::Value compareInputs = allInputs[oCount];
 
-				Json::Value key = compareInputs["Key"];
-				Json::Value value = compareInputs["Value"];
+				// Json::Value key = compareInputs["Key"];
+				// Json::Value value = compareInputs["Value"];
 
-				if(abs(key["X"].asDouble() - xyPoint.x) > 0.0)
-					printf("in original kx || new inputs: %f   ||   %f \n", key["X"].asDouble(), xyPoint.x);
-				if(abs(key["Y"].asDouble() - xyPoint.y) > 0.0)
-					printf("in original ky || new inputs: %f   ||   %f \n", key["Y"].asDouble(), xyPoint.y);
+				// if(abs(key["X"].asDouble() - xyPoint.x) > 0.0)
+				// 	printf("in original kx || new inputs: %f   ||   %f \n", key["X"].asDouble(), xyPoint.x);
+				// if(abs(key["Y"].asDouble() - xyPoint.y) > 0.0)
+				// 	printf("in original ky || new inputs: %f   ||   %f \n", key["Y"].asDouble(), xyPoint.y);
 
-				if(abs(value["X"].asDouble() - otherPoint.x) > 0.0)
-					printf("in original vx || new inputs: %f   ||   %f \n", value["X"].asDouble(), otherPoint.x);
-				if(abs(value["Y"].asDouble() - otherPoint.y) > 0.0)
-					printf("in original vy || new inputs: %f   ||   %f \n", value["Y"].asDouble(), otherPoint.y);
+				// if(abs(value["X"].asDouble() - otherPoint.x) > 0.0)
+				// 	printf("in original vx || new inputs: %f   ||   %f \n", value["X"].asDouble(), otherPoint.x);
+				// if(abs(value["Y"].asDouble() - otherPoint.y) > 0.0)
+				// 	printf("in original vy || new inputs: %f   ||   %f \n", value["Y"].asDouble(), otherPoint.y);
 				
 
-				for(int o=0; o < compareOutputs.size(); o++)
-				{
-					if(abs(compareOutputs[o].asDouble()- outs[o]) > 0.000001 )
-						printf("out original || new outputs || dif : %f   ||   %f   ||   %f \n", compareOutputs[o].asDouble(), outs[o], (abs(compareOutputs[o].asDouble()- outs[o])));
-				}
+				// for(int o=0; o < compareOutputs.size(); o++)
+				// {
+				// 	if(abs(compareOutputs[o].asDouble()- outs[o]) > 0.000001 )
+				// 		printf("out original || new outputs || dif : %f   ||   %f   ||   %f \n", compareOutputs[o].asDouble(), outs[o], (abs(compareOutputs[o].asDouble()- outs[o])));
+				// }
 
                 if (useLeo )
                 {
@@ -635,17 +648,18 @@ Json::Value iesorBody::buildBody(Json::Value compareBody)
 
     }
 
-    int beforeConn = connections.size();
-    int beforeNeuron = hiddenNeurons.size();
+    // int beforeConn = connections.size();
+    // int beforeNeuron = hiddenNeurons.size();
 
-	printf("Before %d\n", beforeConn);
-	printf("tested against %d\n", compareBody["connections"].size());
+	// printf("Before %d\n", beforeConn);
+	// printf("tested against %d\n", compareBody["connections"].size());
 
 	
     map<long, Json::Value> connectionsGoingOut = outwardNodeConnections(connections);
     map<long, Json::Value> connectionsGoingInward = inwardNodeConnections(connections);
 
-    ensureSingleConnectedStructure(connections, connectionsGoingInward,  connectionsGoingOut, hiddenNeurons, conSourcePoints, conTargetPoints);
+    ensureSingleConnectedStructure(connections, connectionsGoingInward,  
+    	connectionsGoingOut, hiddenNeurons, conSourcePoints, conTargetPoints);
 
     if (hiddenNeurons.size() > 20 || connections.size() > 100)
     {

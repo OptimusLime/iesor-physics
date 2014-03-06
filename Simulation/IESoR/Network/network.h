@@ -11,6 +11,7 @@ class Network
 
 		//bring it in via json object
 		Network(Json::Value jsonNetwork);
+		Network(std::string sJSONNetwork);
 
 		//activate the networks
 		double* activate(double* inputs);
@@ -20,6 +21,8 @@ class Network
 		double* GetRegisters() { return registers;}
 
 	private:
+
+		void init(Json::Value startNetwork);
 
 		double* registers;
 		double* weights;
