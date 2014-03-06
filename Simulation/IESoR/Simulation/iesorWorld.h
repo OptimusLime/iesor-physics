@@ -26,7 +26,7 @@ class IESoRWorld
 
 		//std::map<std::string, double>* LoadBodyIntoWorld(BodyInformation* inBody, b2Vec2 widthHeight);
 		//std::vector<Entity*>* getBodyEntities(BodyInformation* inBody, b2Vec2 widthHeight, std::map<std::string, double>* intitialMorphology);
-		std::map<std::string, double>* loadBodyIntoWorld(Json::Value& inBody, b2Vec2 widthHeight);
+		std::map<std::string, double> loadBodyIntoWorld(Json::Value& inBody);
 		std::vector<Json::Value> getBodyEntities(Json::Value& inBody, b2Vec2 widthHeight, std::map<std::string, double>& intitialMorphology);
 
 		//setting bodies inside the world!
@@ -45,6 +45,7 @@ class IESoRWorld
 		double accumulator;
 		double desiredFPS;
 		double simulationRate;
+		b2Vec2 currentSize;
 
 		//keep a list of body identifiers
 		std::vector<PhysicsID*> bodyList;

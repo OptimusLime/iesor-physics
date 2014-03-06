@@ -3,6 +3,7 @@
 
 // These include files constitute the main IESoR API
 #include <IESoR/Simulation/iesorWorld.h>
+#include <IESoR/Simulation/iesorDirector.h>
 #include <IESoR/Simulation/Initialize/initializeWorld.h>
 #include <IESoR/Simulation/Record/recordWorld.h>
 #include <IESoR/Construction/Bodies/outputsToBodies.h>

@@ -72,9 +72,18 @@ iesorBody::iesorBody(std::string sByteNetwork)
 	init(net);
 }
 
-iesorBody::iesorBody(Network* sNetwork)
+iesorBody::iesorBody(Json::Value jByteNetwork)
 {
-	init(sNetwork);
+	//pass in a string will create the network
+	Network* net = new Network(jByteNetwork);
+
+	//initalize our clasee with the network
+	init(net);
+}
+
+iesorBody::iesorBody(Network* fNetwork)
+{
+	init(fNetwork);
 }
 
 void iesorBody::init(Network* sNetwork)
@@ -222,16 +231,20 @@ string jsonConnToString(Json::Value conn)
     return n;
 }
 
- int findIndex(Point point, Json::Value pointArray)
+ Json::Value findIndex(Point point, Json::Value pointArray)
  {
 	 for(int i=0; i < pointArray.size(); i++)
 	 {
 		 Json::Value p = pointArray[i];
 		 if(point.x== p["x"].asDouble() && point.y == p["y"].asDouble())
-			 return i;
+			 {
+			 	Json::Value r(i);
+			 	return r;
+			 } 
 	 }
 
-	 return -1;
+ 	Json::Value r(-1);
+ 	return r;
  }
 
  void ensureSingleConnectedStructure(Json::Value& connections,
@@ -402,6 +415,8 @@ string jsonConnToString(Json::Value conn)
 	//use map to prevent duplicates
 	map<string, int> hiddenAlready;
 
+	printf("Conn final: %i \n", connections.size());
+
     //make sure points are distinct, and no dupes -- we only need to do this once
 	for(int i=0; i < connections.size(); i++)
 	{
@@ -425,6 +440,7 @@ string jsonConnToString(Json::Value conn)
 			hiddenAlready[s] = 1;
 			hiddenNeurons.append(potential.toJSON());
 		}
+
 	}
 
     //now we have to correct the indices of the max-chain of objects
@@ -444,8 +460,18 @@ string jsonConnToString(Json::Value conn)
         point = conTargetPoints[cID];
 		con["targetID"] = findIndex(point, hiddenNeurons);
 
+		// printf("NSource: %i, NTarget: %i \n", 
+		// 	con["sourceID"].asInt64(),
+		// 	con["targetID"].asInt64());
+		// Json::StyledWriter writer;
+		// printf("Conn: %s", writer.write(con).c_str());
+
 		if (con["targetID"].asInt64() == -1)
 			printf("Adjusted con src- %d, tgt- %d \n", con["sourceID"].asInt(), con["targetID"].asInt());
+
+
+		//make sure to overwrite the connection with our new object
+		connections[i] = con;
 
 	}
 

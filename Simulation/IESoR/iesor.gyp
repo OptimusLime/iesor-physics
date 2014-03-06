@@ -38,6 +38,7 @@
                 "<(iesor_dir)/IESoR/Network/network.h",
                 "<(iesor_dir)/IESoR/Network/iesorBody.h",
                 "<(iesor_dir)/IESoR/Simulation/iesorWorld.h",
+                "<(iesor_dir)/IESoR/Simulation/iesorDirector.h",
                 "<(iesor_dir)/IESoR/Simulation/Initialize/initializeWorld.h",
                 "<(iesor_dir)/IESoR/Simulation/Record/recordWorld.h",
 
@@ -47,6 +48,7 @@
                 "<(iesor_dir)/IESoR/Network/network.cpp",
                 "<(iesor_dir)/IESoR/Network/iesorBody.cpp",
                 "<(iesor_dir)/IESoR/Simulation/iesorWorld.cpp",
+                "<(iesor_dir)/IESoR/Simulation/iesorDirector.cpp",
                 "<(iesor_dir)/IESoR/Simulation/Initialize/initializeWorld.cpp",
                 "<(iesor_dir)/IESoR/Simulation/Record/recordWorld.cpp"
             ],           

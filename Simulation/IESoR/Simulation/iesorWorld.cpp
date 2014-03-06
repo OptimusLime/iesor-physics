@@ -251,6 +251,9 @@ IESoRWorld::IESoRWorld()
 	//this->bodyList = new Json::Value(Json::arrayValue);
 	//this->shapeList = new Json::Value(Json::arrayValue);
 
+	currentSize = b2Vec2(200, 150);
+
+
 	// Define the gravity vector.
 	b2Vec2 gravity(0.0f, -15.0f);
 
@@ -281,7 +284,7 @@ IESoRWorld::IESoRWorld()
 	this->addShapeToBody(groundBody, &groundBox, 0.0f);
 	//groundBody->CreateFixture(&groundBox, 0.0f);
 
-	b2Vec2 canvas(200, 150);
+	// b2Vec2 canvas(200, 150);
 	//this->loadBodyIntoWorld(inBody, canvas);
 
 
@@ -593,6 +596,8 @@ std::vector<Json::Value> IESoRWorld::getBodyEntities(Json::Value& inBody, b2Vec2
 	double canvasWidth = widthHeight.x;
 	double canvasHeight = widthHeight.y;
 
+	printf(" Widht %f, height: %f \n", canvasWidth, canvasHeight);
+
 	//Grab an array of nodes from our json object
 	Json::Value oNodes = inBody["nodes"];
 
@@ -874,27 +879,40 @@ Muscle* IESoRWorld::addMuscleJoint(std::string sourceID, std::string targetID, J
 	return ms;
 }
 
-std::map<std::string, double>* IESoRWorld::loadBodyIntoWorld(Json::Value& inBody, b2Vec2 widthHeight)
+std::map<std::string, double> IESoRWorld::loadBodyIntoWorld(Json::Value& inBody)
 {
 	//we use bodycount as a way to identify each physical object being added from the body information
-	int oBodyCount = world->GetBodyCount();
+	long oBodyCount = (long)world->GetBodyCount();
 
 	//This mapping will be what we return from the function while adding the body
 	//we measure the morphological properties
     map<string, double> morphology;
+
+    //take our current size as the size to add entities into the space
+    b2Vec2 widthHeight = currentSize;
+
+    printf("Body prep: %i, nodeCount: %i, connCount: %i \n", 
+    	oBodyCount, 
+    	inBody["nodes"].size(), 
+    	inBody["connections"].size());
 
 	//here we use our body information to create all the necessary body additions to the world
     vector<Json::Value> entities = getBodyEntities(inBody, widthHeight, morphology);
 
 	//we'll quickly map and ID into a json point value
 	map<string, Json::Value> entityMap;
-    
+    int cnt=0;
 	//this was we can access locations by the bodyID while determining connection distance
 	for (std::vector<Json::Value>::iterator it = entities.begin() ; it != entities.end(); ++it)
 	{
 		Json::Value e = *it;
+		printf("bID %s \n", e["bodyID"].asString().c_str());
 		entityMap[e["bodyID"].asString()] = e;
+		cnt++;
 	}
+
+    printf("Body Map prepared: %i \n", cnt);
+
 
     //push our bodies into the system so that our joints have bodies to connect to
 	this->setBodies(&entities);
@@ -912,15 +930,29 @@ std::map<std::string, double>* IESoRWorld::loadBodyIntoWorld(Json::Value& inBody
 	//mass = # of nodes + length of connections
 	double connectionDistanceSum = 0.0;
 
+    printf("Conns to eval: %i \n", connections.size());
+    int connSize = connections.size();
+
 	//loop through all our connections
-	for(int i=0; i < connections.size(); i++)
+	for(int i=0; i < connSize; i++)
 	{
+		printf("Conn %i start \n", i);
 		//grab connection from our array
 		Json::Value connectionObject = connections[i];
 		Json::Value cppnOutputs = connectionObject["cppnOutputs"];
 
-		int sID = atoi(connectionObject["sourceID"].asString().c_str());
-		int tID = atoi(connectionObject["targetID"].asString().c_str());
+		Json::StyledWriter write;
+
+    	printf("Conn to eval: %s sID: %i, tID: %i \n", 
+    		write.write(connectionObject).c_str(),
+    		connectionObject["sourceID"].asInt64(),
+    		connectionObject["targetID"].asInt64());
+
+		long sID = connectionObject["sourceID"].asInt64();//atoi(connectionObject["sourceID"].asString().c_str());
+		long tID = connectionObject["targetID"].asInt64();//atoi(connectionObject["targetID"].asString().c_str());
+
+    	printf("Conn to eval: %i - %i \n", sID, tID);
+
 
 		//To identify a given object in the physical world, we need to start with the current body count, and add the source id number
 		//This allows us to add multiple bodies to the same world (though this is recommended against, since it's easier to create separate worlds)
@@ -928,7 +960,7 @@ std::map<std::string, double>* IESoRWorld::loadBodyIntoWorld(Json::Value& inBody
 		string targetID = toString(oBodyCount + tID);
                
 		 //we ignore connections that loop to themselves 
-        if (sourceID == targetID)
+        if (sID == tID)
         {
             continue;
         }
@@ -943,6 +975,10 @@ std::map<std::string, double>* IESoRWorld::loadBodyIntoWorld(Json::Value& inBody
 			//sample the amplitude output to know what's up -- we convert from [-1,1] to [0,1]
 			double amp = (cppnOutputs[ampIx].asDouble() + 1) / 2;
 
+			// printf("Ent source: %s \n, ent targ: %s \n", 
+			// 	write.write(entityMap[sourceID]).c_str(),
+			// 	write.write(entityMap[targetID]).c_str());
+
 			//what's the distance been the source (x,y) and distance (x,y) -- that's the length of our connection
 			double connectionDistance = sqrt(
 				pow(entityMap[sourceID]["x"].asDouble() - entityMap[targetID]["x"].asDouble(), 2) 
@@ -953,6 +989,8 @@ std::map<std::string, double>* IESoRWorld::loadBodyIntoWorld(Json::Value& inBody
 
 			//this will hold our custom props for the distance/muscle joints
 			Json::Value props;
+
+			printf("Amp: %d, cutoff: %d \n", amp, amplitudeCutoff);
 
             if (amp < amplitudeCutoff)
 				this->addDistanceJoint(sourceID, targetID, props);//, {frequencyHz: 3, dampingRatio:.3});
@@ -987,7 +1025,7 @@ std::map<std::string, double>* IESoRWorld::loadBodyIntoWorld(Json::Value& inBody
 	//morphology should now have width/height, startX/startY, and mass
 	morphology.erase("totalNodes");
 
-	return &morphology;
+	return morphology;
 }
 
 

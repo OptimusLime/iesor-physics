@@ -11,7 +11,8 @@ class iesorBody
 	public:
 
 		iesorBody(std::string sByteNetwork);
-		iesorBody(Network* sNetwork);
+		iesorBody(Json::Value jByteNetwork);
+		iesorBody(Network* fNetwork);
 
 		//build body using network
 		//keep as separate call so it can be made on another thread

@@ -12,14 +12,14 @@ class IESoRWrap : node::ObjectWrap {
   public:
   static void Init(Handle<Object> exports);
   
-  IESoRWorld* World() const { return world_; }
+  IESoRDirector* Director() const { return director_; }
 
 
  private:
   explicit IESoRWrap();
   ~IESoRWrap();
 
-  IESoRWorld* world_;
+  IESoRDirector* director_;
 
   static Handle<Value> New(const Arguments& args);
   static Handle<Value> LoadBodyFromNetwork(const Arguments& args);
