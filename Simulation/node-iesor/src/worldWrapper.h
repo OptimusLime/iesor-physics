@@ -23,6 +23,8 @@ class IESoRWrap : node::ObjectWrap {
 
   static Handle<Value> New(const Arguments& args);
   static Handle<Value> LoadBodyFromNetwork(const Arguments& args);
+  static Handle<Value> SimulateWorldMS(const Arguments& args);
+  static Handle<Value> GetWorldDrawList(const Arguments& args);
 };
 
 #endif

@@ -245,6 +245,9 @@ IESoRWorld::IESoRWorld()
 	simulationRate = 1.0 / desiredFPS;
 	radians = 0;
 
+	//if we need to simulate a certain amount of time, we refuse above a certain amount
+	maxFrameSize = .35;
+
 
 	//this->bodyList = new vector<PhysicsID*>();
 	//this->shapeList = new vector<PhysicsID*>();
@@ -373,14 +376,18 @@ Json::Value listOfPoints(b2Vec2* points, int length)
 
 	return pArray;
 }
-
 string IESoRWorld::worldDrawList()
 {
 	//This will be written to json
 	//fastwriter is not human readable --> compact
 	//exactly what we want to sent to our html files
 	Json::FastWriter* writer = new Json::FastWriter();
+	Json::Value root = jsonWorldDrawList();
+	return writer->write(root);
+}
 
+Json::Value IESoRWorld::jsonWorldDrawList()
+{
 	//root is what we'll be sending back with all the shapes (stored in shapes!)
 	Json::Value root;
 	Json::Value shapes;
@@ -502,9 +509,21 @@ string IESoRWorld::worldDrawList()
 
 	root["joints"] = joints;
 
-	return writer->write(root);
+	return root;
 }
 
+double speedFrameMultiplier = 4.0;
+
+double IESoRWorld::modifyFrameTime(double mseconds)
+{
+	//return multiplier * mseconds / 1000 == seconds
+	return (mseconds*speedFrameMultiplier)/1000.f;
+}
+
+double IESoRWorld::MaxFrameSizeMS()
+{
+	return maxFrameSize*1000.0/speedFrameMultiplier;
+}
 
 //pass in the amount of time you want to simulate
 //in real time, this is the delta time between called to update
@@ -512,17 +531,15 @@ string IESoRWorld::worldDrawList()
 //so it holds up the thread
 int IESoRWorld::updateWorld(double msUpdate)
 {
-	msUpdate = 4*msUpdate;
-
 	//we'll keep track of the number of times we simulated during this update
     int stepCount = 0;
 
     //# of seconds since last time
-    double frameTime = msUpdate/1000.0f;
+    double frameTime =  modifyFrameTime(msUpdate);
 
     //maximum frame time, to prevent what is called the spiral of death
-    if (frameTime > .35)
-        frameTime = .35;
+    if (frameTime > maxFrameSize)
+        frameTime = maxFrameSize;
 
     //we accumulate all the time we haven't rendered things in
     this->accumulator += frameTime;
@@ -580,6 +597,7 @@ int IESoRWorld::updateWorld(double msUpdate)
 	//it's meant to ease the drawing stages 
 	//(you linearly interpolate the last frame and the current frame using this value)
     this->interpolation = accumulator / this->simulationRate;
+    // printf("Interp: %f , %f, final- %f \n", accumulator, this->simulationRate, this->interpolation);
 
 	//how many times did we run the simulator?
     return stepCount;

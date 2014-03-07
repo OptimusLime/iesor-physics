@@ -22,8 +22,16 @@ void IESoRWrap::Init(Handle<Object> exports) {
   tpl->InstanceTemplate()->SetInternalFieldCount(1);
   
   // Prototype
+  //load body into our iesor world (convert from network to body and insert into box2d world)
   tpl->PrototypeTemplate()->Set(String::NewSymbol("loadBodyFromNetwork"),
       FunctionTemplate::New(LoadBodyFromNetwork)->GetFunction());
+
+  //simulate a time period inside the world (returns information about simulation)
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("simulateWorldMS"),
+      FunctionTemplate::New(SimulateWorldMS)->GetFunction());
+
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("getWorldDrawList"),
+      FunctionTemplate::New(GetWorldDrawList)->GetFunction());
 
   constructor = Persistent<Function>::New(tpl->GetFunction());
   exports->Set(String::NewSymbol("iesorWorld"), constructor);
@@ -44,6 +52,9 @@ Handle<Value> IESoRWrap::New(const Arguments& args) {
     return scope.Close(constructor->NewInstance(argc, argv));
   }
 }
+////////////////
+/// Methods inside javascript object
+////////////////
 
 //TODO: Make this asynchronous
 Handle<Value> IESoRWrap::LoadBodyFromNetwork(const Arguments& args) {
@@ -63,5 +74,41 @@ Handle<Value> IESoRWrap::LoadBodyFromNetwork(const Arguments& args) {
   //until then, just send back the body information
   return scope.Close(String::New(byteNetwork.c_str()));
 }
+
+Handle<Value> IESoRWrap::SimulateWorldMS(const Arguments& args) {
+  
+  HandleScope scope;
+
+  IESoRWrap* obj = ObjectWrap::Unwrap<IESoRWrap>(args.This());
+  
+  double simTime = args[0]->NumberValue();
+  
+  IESoRDirector* director = obj->Director();
+
+  //send the time into our director (which will in turn run the iesorWorld)
+  std::string worldStep = director->sLongSimulateWorld(simTime);
+
+  //we send back the info as a string (again json object -- figure out later what to do about this)
+  return scope.Close(String::New(worldStep.c_str()));
+}
+
+Handle<Value> IESoRWrap::GetWorldDrawList(const Arguments& args) {
+  
+  HandleScope scope;
+
+  IESoRWrap* obj = ObjectWrap::Unwrap<IESoRWrap>(args.This());
+  
+  IESoRDirector* director = obj->Director();
+
+  //no arguments, just fetch the worldly information, and send it back!
+  std::string worldDraw = director->sCrrentDrawFrame();
+
+  //we send back the info as a string (again json object -- figure out later what to do about this)
+  return scope.Close(String::New(worldDraw.c_str()));
+}
+
+
+
+
 
 

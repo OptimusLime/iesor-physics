@@ -17,6 +17,23 @@ var s = iWorld.loadBodyFromNetwork(tgString);//sGenome.toString());
 var body = JSON.parse(s);
 console.log("Generated body: ", body);
 
+
+//simulate for 1/2 second
+var simTimeMS = 500;
+
+//tell the wrold to simulate
+var simInfo = iWorld.simulateWorldMS(simTimeMS);
+
+
+console.log('Sim info: ', JSON.parse(simInfo));
+
+var drawInfo = iWorld.getWorldDrawList();
+
+console.log("Draw it: ", JSON.parse(drawInfo));
+
+
+
+
 // console.log("Ret val: ", s);
 
 //set up a timer for simulation

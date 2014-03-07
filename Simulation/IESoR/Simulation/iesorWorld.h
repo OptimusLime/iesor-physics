@@ -17,8 +17,12 @@ class IESoRWorld
 	public:
 		IESoRWorld();
 		std::string worldDrawList();
+		Json::Value jsonWorldDrawList();
 		b2World* world;
 		int updateWorld(double msUpdate);
+
+		double CurrentInterpolation() const { return interpolation; }
+		double MaxFrameSizeMS();
 
 		b2Body* addBodyToWorld(std::string bodyID, b2BodyDef* bodyDef);
 		b2Fixture* addShapeToBody(b2Body* body, b2FixtureDef* fixDef);
@@ -37,6 +41,8 @@ class IESoRWorld
 		Bone* addDistanceJoint(std::string sourceID, std::string targetID, Json::Value props);
 		Muscle* addMuscleJoint(std::string sourceID, std::string targetID, Json::Value props);
 
+
+
 	private:
 		//Json::Value* bodyList;
 		//Json::Value* shapeList;
@@ -45,7 +51,10 @@ class IESoRWorld
 		double accumulator;
 		double desiredFPS;
 		double simulationRate;
+		double maxFrameSize;
 		b2Vec2 currentSize;
+
+		double modifyFrameTime(double fTime);
 
 		//keep a list of body identifiers
 		std::vector<PhysicsID*> bodyList;
