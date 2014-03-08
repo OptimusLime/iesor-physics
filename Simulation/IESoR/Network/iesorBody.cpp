@@ -318,15 +318,18 @@ string jsonConnToString(Json::Value conn)
 
 					long sourceID = cg["sourceID"].asInt64();
 					long targetID = cg["targetID"].asInt64();
-                    //add it to our chain, since it's connected!
-                    //recursive chain connections are actually not allowed
-					if (sourceID != targetID)
-						conChain.append(cg);
+                   
 
                     //also note that we've seen this connection -- no duplicates please -- although I don't know if
                     //this will ever be triggered -- i don't think so
-					if(seenConnections[jsonConnToString(cg)].isNull())
+					if(seenConnections[jsonConnToString(cg)].isNull()){
                         seenConnections[jsonConnToString(cg)] = cg;
+						
+                        //add it to our chain, since it's connected but never seen
+                    	//recursive chain connections are actually not allowed
+						if (sourceID != targetID)
+                        	conChain.append(cg);
+					}
 
                     //we need to investigate another node -- no duplicates please!
 					if (seenNodes[iToS(targetID)].isNull() && investigateMap.find(targetID) == investigateMap.end())
@@ -337,7 +340,6 @@ string jsonConnToString(Json::Value conn)
 					}
                 }
 
-
                 //and grab all of the connections going inward too -- we need to go both direction
                 cgOut = inwardConnection[sourceNode];
 
@@ -347,18 +349,20 @@ string jsonConnToString(Json::Value conn)
                     //grab our connection gene
                     Json::Value cg = cgOut[c];
 
+                    //fetch the source/target info
 					long sourceID = cg["sourceID"].asInt64();
 					long targetID = cg["targetID"].asInt64();
 
-                    //add it to our chain, since it's connected!
-                    //recursive chain connections are actually not allowed
-                    if (sourceID != targetID)
-						conChain.append(cg);
-
                     //also note that we've seen this connection -- no duplicates please -- although I don't know if
                     //this will ever be triggered -- i don't think so
-                    if(seenConnections[jsonConnToString(cg)].isNull())
+                    if(seenConnections[jsonConnToString(cg)].isNull()){
                         seenConnections[jsonConnToString(cg)] = cg;
+
+                        //add it to our chain, since it's connected --but unchecked!
+	                    //recursive chain connections are actually not allowed
+	                    if (sourceID != targetID)
+							conChain.append(cg);
+                    }
 
                     //we need to investigate another node -- no duplicates please!
                     //going for inward goofers
@@ -389,9 +393,11 @@ string jsonConnToString(Json::Value conn)
 
     //now we simply choose the maximum connection chain -- or the first one with the max found
     Json::Value* maxCGL;
-	
+	printf(" Conn chains: %i \n", connectionChains.size());
 	for(int i=0; i < connectionChains.size(); i++)
 	{
+		printf(" Conn chain %i size: %i \n", i, connectionChains[i].size());
+
 		if(connectionChains[i].size() == maxChain)
 		{
 			maxCGL = &connectionChains[i];

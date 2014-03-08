@@ -25,6 +25,7 @@ class IESoRWrap : node::ObjectWrap {
   static Handle<Value> LoadBodyFromNetwork(const Arguments& args);
   static Handle<Value> SimulateWorldMS(const Arguments& args);
   static Handle<Value> GetWorldDrawList(const Arguments& args);
+  static Handle<Value> ConvertNetworkToBody(const Arguments& args);
 };
 
 #endif

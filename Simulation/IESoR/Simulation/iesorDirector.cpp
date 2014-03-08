@@ -84,6 +84,29 @@ Json::Value IESoRDirector::longSimulateWorld(double time)
 	return stepInfo;
 }
 
+
+Json::Value IESoRDirector::convertNetworkToBody(std::string& sByteNetwork)
+{
+	Json::Value val = string2JSON(sByteNetwork);
+	return convertNetworkToBody(val);
+}
+Json::Value IESoRDirector::convertNetworkToBody(Json::Value& byteNetwork)
+{
+		//build class capable of generating a body from a network
+	iesorBody* bodyCreator = new iesorBody(byteNetwork);
+
+	//in the async version, this is the call we would be doing in a worker thread
+	Json::Value fullBody = bodyCreator->buildBody();
+
+	//return the body after it's built
+	return fullBody;
+}
+std::string IESoRDirector::sConvertNetworkToBody(std::string& sByteNetwork)
+{
+	return json2String(convertNetworkToBody(sByteNetwork));
+}
+
+
 //same as inserting with json, we just parse the string to form our json network
 std::map<std::string, double> IESoRDirector::insertBodyFromNetwork(std::string& network)
 {

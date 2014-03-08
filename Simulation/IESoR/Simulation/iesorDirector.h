@@ -18,6 +18,10 @@ class IESoRDirector
 		std::map<std::string, double> insertBodyFromNetwork(std::string& network);
 		std::map<std::string, double> insertBodyFromNetwork(Json::Value& network);
 
+		Json::Value convertNetworkToBody(std::string& network);
+		Json::Value convertNetworkToBody(Json::Value& network);
+		std::string sConvertNetworkToBody(std::string& sByteNetwork);
+
 		Json::Value longSimulateWorld(double time);
 		std::string sLongSimulateWorld(double time);
 

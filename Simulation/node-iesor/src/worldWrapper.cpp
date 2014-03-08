@@ -2,6 +2,8 @@
 #include <node.h>
 #include "worldWrapper.h"
 #include <json.h>
+#include <string>
+#include <sstream>
 
 using namespace v8;
 
@@ -26,12 +28,19 @@ void IESoRWrap::Init(Handle<Object> exports) {
   tpl->PrototypeTemplate()->Set(String::NewSymbol("loadBodyFromNetwork"),
       FunctionTemplate::New(LoadBodyFromNetwork)->GetFunction());
 
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("convertNetworkToBody"),
+      FunctionTemplate::New(ConvertNetworkToBody)->GetFunction());
+  
   //simulate a time period inside the world (returns information about simulation)
   tpl->PrototypeTemplate()->Set(String::NewSymbol("simulateWorldMS"),
       FunctionTemplate::New(SimulateWorldMS)->GetFunction());
 
   tpl->PrototypeTemplate()->Set(String::NewSymbol("getWorldDrawList"),
       FunctionTemplate::New(GetWorldDrawList)->GetFunction());
+  
+
+
+  
 
   constructor = Persistent<Function>::New(tpl->GetFunction());
   exports->Set(String::NewSymbol("iesorWorld"), constructor);
@@ -56,6 +65,30 @@ Handle<Value> IESoRWrap::New(const Arguments& args) {
 /// Methods inside javascript object
 ////////////////
 
+std::string d2String(double number)
+{
+    std::ostringstream convert;   // stream used for the conversion
+    convert << number;      // insert the textual representation of 'number' in the characters in the stream
+    return convert.str();
+}
+
+std::string map2String(std::map<std::string, double> map)
+{ 
+  std::string mapToString = "{";
+  
+  for(std::map<std::string, double>::iterator it = map.begin(); it != map.end(); ++it)
+  {
+      mapToString += ("\"" + it->first + "\"" + ":" + "\"" + d2String(it->second) + "\"");
+      if(it->first != map.rbegin()->first)
+      {
+        mapToString += ",";
+      }
+  }
+  mapToString += "}";
+
+  return mapToString;
+}
+
 //TODO: Make this asynchronous
 Handle<Value> IESoRWrap::LoadBodyFromNetwork(const Arguments& args) {
   HandleScope scope;
@@ -64,16 +97,38 @@ Handle<Value> IESoRWrap::LoadBodyFromNetwork(const Arguments& args) {
   
   std::string byteNetwork(*v8::String::Utf8Value(args[0]->ToString()));
   
+  //grab director from our object
+  //director wraps all the necessary calls to iesorWorld -- it'll handle body loading from networks
   IESoRDirector* director = obj->Director();
 
   //send the body into our director (which will in turn load into a iesorWorld
-  director->insertBodyFromNetwork(byteNetwork);
+  std::map<std::string, double> morph = director->insertBodyFromNetwork(byteNetwork);
 
-  //... in the future, we'll then use the body information to insert into our world
-  
-  //until then, just send back the body information
-  return scope.Close(String::New(byteNetwork.c_str()));
+  //for now, send back morphology information
+  return scope.Close(String::New(map2String(morph).c_str()));
 }
+
+
+//TODO: Make this asynchronous
+Handle<Value> IESoRWrap::ConvertNetworkToBody(const Arguments& args) {
+  HandleScope scope;
+
+  IESoRWrap* obj = ObjectWrap::Unwrap<IESoRWrap>(args.This());
+  
+  std::string byteNetwork(*v8::String::Utf8Value(args[0]->ToString()));
+  
+  //grab director from our object
+  //director wraps all the necessary calls to iesorWorld -- it'll handle body loading from networks
+  IESoRDirector* director = obj->Director();
+
+  //send the body into our director (which will in turn load into a iesorWorld
+  std::string bodyString = director->sConvertNetworkToBody(byteNetwork);
+
+  //for now, send back morphology information
+  return scope.Close(String::New(bodyString.c_str()));
+}
+
+
 
 Handle<Value> IESoRWrap::SimulateWorldMS(const Arguments& args) {
   

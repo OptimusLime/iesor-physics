@@ -6,77 +6,10 @@
 <body>
 
     <canvas id="fab" width="1000" height="700" style="border: 1px solid black;"></canvas>
-
+    <script type="text/javascript" src="/js/fabric.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script>
-      var socket = io.connect('http://localhost');
-      socket.on('news', function (data) {
-        console.log(data);
-        socket.emit('my other event', { my: 'data' });
-    });
-    </script>   
-    <script>
-
-//        var object = { intValue: 1 };
-//        var callNative = jsBridgeObject.slotThatReturns(object);
-
-
-
-        function doGPU(ngJSON)
-        {
-            var gpu = require('iesorGPU');
-            console.log(gpu);
-
-            return JSON.stringify(gpu.NeatGenomeToByteCode(ngJSON));
-        }
-
-        var lastCPPN;
-
-        function randomEvaluation(ngJSON)
-        {
-            var gpu = require('iesorGPU');
-
-            if(!lastCPPN)
-            {
-                var ng = gpu.convertToNeatObject(ngJSON);
-                lastCPPN = ng.networkDecode();
-            }
-
-            var inputs = [];
-            for(var i=0; i < lastCPPN.inputNeuronCount; i++)
-                inputs.push(Math.random());
-
-//            console.log(gpu);
-
-
-            lastCPPN.clearSignals();
-            var oldSignals = [].slice.apply(lastCPPN.neuronSignals);
-            lastCPPN.setInputSignals(inputs);
-            lastCPPN.recursiveActivation();
-
-            var outputs = [];
-            for(var i=0; i< lastCPPN.outputNeuronCount; i++)
-                outputs.push(lastCPPN.getOutputSignal(i));
-
-            var activations = [];
-            for(var i=0; i < lastCPPN.activationFunctions.length; i++)
-            {
-                var aFunc = lastCPPN.activationFunctions[i];
-                if(typeof aFunc == "object")
-                    activations.push(aFunc.functionID);
-                else
-                    activations.push(aFunc);
-            }
-
-
-            return {inputs: inputs,
-                outputs: outputs,
-                signals: lastCPPN.neuronSignals,
-                startSignals: oldSignals,
-                activations: activations};
-        }
-
-
+        var socket = io.connect('http://localhost');
 
         var canvas;
 
@@ -289,12 +222,12 @@
         };
 
         var count =0;
-        function injectFabricObjects(fullJSON) {
+        function injectFabricObjects(replaceJSON) {
 
-            var str = JSON.stringify(fullJSON);
+            // var str = JSON.stringify(fullJSON);
 
 //            console.log(str);
-            var replaceJSON = JSON.parse(str);
+            // var replaceJSON = JSON.parse(str);
 //            console.log(replaceJSON);
 
             if (!canvas) {
@@ -388,7 +321,7 @@
 //                        props.top += fabObj.height/2;
 //                        props.left += fabObj.width/2;
 
-                        console.log(canvasObj.points);
+                        // console.log(canvasObj.points);
 
 
                         break;
@@ -455,28 +388,44 @@
 
         }
 
-
-        var c=0;
-        //let's see if we can do 30 fps!
-        var animate = function()
+         //grab a genoem object for display
+        socket.emit('sampleGenome', function(err, worldID, morphology)
         {
-            jsBridgeObject.jsCallPhysicsUpdate();
+            if(err)
+                console.log("Sample error: ", err);
+            else
+            {
+                console.log('World created: ', worldID, " with body morph: ", morphology);
+            }
 
-//            if(c++<10)
-            setTimeout(animate, 16.67);
-        };
+             var c=0;
+             var animationFailed = true;
+             var msSimTime = 16.67;
+            //let's see if we can do 30 fps!
+            var animate = function()
+            {
+                socket.emit('simulateAndDrawWorld', worldID, msSimTime, function(err, simInfo, drawList)
+                {
+                    try
+                    {
+                        injectFabricObjects(JSON.parse(drawList));
+                    }
+                    catch(e)
+                    {
+                        animationFailed = true;
+                    }
+                });
 
-        setTimeout(animate, 0);
+    //            if(c++<10)
+                if(!animationFailed)
+                    setTimeout(animate, msSimTime);
+            };
 
+            setTimeout(animate, 0); 
 
+        });
 
-
-        function wakkawakka(jsObj) {
-            console.log("Wakka wakka: " + jsObj);
-            console.log('Is up to date');
-            console.log(JSON.parse(jsObj));
-            return "bakka do da!";
-        }                
+            
 
     </script>
 </body>

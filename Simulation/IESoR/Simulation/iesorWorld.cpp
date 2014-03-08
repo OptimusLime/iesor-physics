@@ -297,7 +297,7 @@ IESoRWorld::IESoRWorld()
 	bodyDef.position.Set(0.0f, 24.0f);
 
 	//add body to world using definition
-	b2Body* body = this->addBodyToWorld("rect1", &bodyDef);
+	// b2Body* body = this->addBodyToWorld("rect1", &bodyDef);
 
 	// Define another box shape for our dynamic body.
 	b2PolygonShape dynamicBox;
@@ -315,7 +315,7 @@ IESoRWorld::IESoRWorld()
 	fixtureDef.friction = 0.3f;
 
 	// Add the shape to the body.
-	this->addShapeToBody(body, &fixtureDef);
+	// this->addShapeToBody(body, &fixtureDef);
 	
 	// Define the circle body. We set its position and call the body factory.
 	b2BodyDef cDef;
@@ -323,7 +323,7 @@ IESoRWorld::IESoRWorld()
 	cDef.position.Set(10.0f, 24.0f);
 
 	//add body to world using definition
-	body = this->addBodyToWorld("circleTest", &cDef);
+	// body = this->addBodyToWorld("circleTest", &cDef);
 
 	// Define another box shape for our dynamic body.
 	b2CircleShape dCircle;
@@ -341,17 +341,17 @@ IESoRWorld::IESoRWorld()
 	circleDef.friction = 0.3f;
 
 	// Add the shape to the body.
-	this->addShapeToBody(body, &circleDef);
+	// this->addShapeToBody(body, &circleDef);
 
 
 
 	//Add some forces!
 	//body->ApplyAngularImpulse(.4, true);
 	
-	body->ApplyTorque(150, true);
+	// body->ApplyTorque(150, true);
 	b2Vec2 pulse(70, 0);
 	b2Vec2 o(0,3);
-	body->ApplyLinearImpulse(pulse, o, true);
+	// body->ApplyLinearImpulse(pulse, o, true);
 
 }
 

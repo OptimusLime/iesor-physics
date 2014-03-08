@@ -1,9 +1,12 @@
 {
-"name" : "iesorWIN",
-"private" : "true",
-"version" : "0.0.1",
-"dependencies" : {
-"express" : "*", 
-"socket.io" : "*"
-}
+	"name" : "iesorWIN",
+	"private" : "true",
+	"version" : "0.0.1",
+	"dependencies" : {
+		"express" : "*", 
+		"q" : "*", 
+		"neatjs" : "*", 
+		"cppnjs" : "*", 
+		"socket.io" : "*"
+	}
 }
